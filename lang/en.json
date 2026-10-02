@@ -1,0 +1,7 @@
+{
+    "password-updated": "Password changed",
+    "two-factor-authentication-enabled": "Almost done: scan the QR code and enter a code to turn on two-step sign-in",
+    "two-factor-authentication-confirmed": "Two-step sign-in is on",
+    "two-factor-authentication-disabled": "Two-step sign-in is off",
+    "recovery-codes-generated": "New recovery codes created. Your old codes no longer work."
+}

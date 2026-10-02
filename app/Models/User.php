@@ -1,0 +1,112 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\Role;
+use Database\Factories\UserFactory;
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+
+class User extends Authenticatable
+{
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+
+    /**
+     * role and is_active are mass-assignable for admin user management (step 2),
+     * which must always go through the manage-users gate and a Form Request.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role',
+        'is_active',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+    ];
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'role' => 'sales',
+        'is_active' => true,
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'password' => 'hashed',
+            'role' => Role::class,
+            'is_active' => 'boolean',
+            'last_login_at' => 'datetime',
+            'two_factor_confirmed_at' => 'datetime',
+        ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === Role::Admin;
+    }
+
+    public function isManager(): bool
+    {
+        return $this->role === Role::Manager;
+    }
+
+    public function isSales(): bool
+    {
+        return $this->role === Role::Sales;
+    }
+
+    public function hasAnyRole(Role ...$roles): bool
+    {
+        return in_array($this->role, $roles, true);
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_secret !== null && $this->two_factor_confirmed_at !== null;
+    }
+
+    /**
+     * Send the reset email after the HTTP response, so the forgot-password response
+     * time doesn't differ between existing and unknown email addresses.
+     */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $notification = new ResetPassword($token);
+
+        defer(fn () => $this->notify($notification));
+    }
+
+    public function assignedLeads(): HasMany
+    {
+        return $this->hasMany(Lead::class, 'assigned_to');
+    }
+
+    public function createdLeads(): HasMany
+    {
+        return $this->hasMany(Lead::class, 'created_by');
+    }
+
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(FollowUp::class, 'assigned_to');
+    }
+}

@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+/*
+ * Design tokens. Light theme only. One accent colour (blue) for primary actions
+ * and links; neutral greys for everything else. Colour is used for meaning only.
+ * See "UI rules" in CLAUDE.md. Page-level styling should come from the shared
+ * Blade components in resources/views/components, not one-off classes.
+ */
+@theme {
+    --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+    /* Base reading size is 15px: text-sm = 15px, text-base = 16px, text-xs = 13px. */
+    --text-xs: 0.8125rem;
+    --text-xs--line-height: 1.25rem;
+    --text-sm: 0.9375rem;
+    --text-sm--line-height: 1.5rem;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+@layer base {
+    html {
+        @apply bg-slate-50;
+    }
+
+    body {
+        @apply text-sm text-slate-900 antialiased;
+    }
+
+    /* Clearly visible keyboard focus on everything interactive. */
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-blue-600;
+    }
+
+    dialog::backdrop {
+        background: rgb(15 23 42 / 0.4);
+    }
+}
