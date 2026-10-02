@@ -1,0 +1,42 @@
+# Secrets and local config: configuration comes from env vars at runtime.
+.env
+.env.*
+
+# VCS, dependencies and build output (rebuilt inside the image)
+.git
+.gitignore
+.gitattributes
+node_modules
+vendor
+public/build
+public/hot
+
+# Tests and local tooling
+tests
+phpunit*.xml
+.phpunit.cache
+.phpunit.result.cache
+.editorconfig
+.vscode
+.idea
+.claude
+docs
+database/*.sqlite*
+
+# Runtime state (keep the directory skeletons via their .gitignore files)
+storage/logs/*
+!storage/logs/.gitignore
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+!storage/framework/**/.gitignore
+storage/app/private/*
+!storage/app/private/.gitignore
+storage/app/public/*
+!storage/app/public/.gitignore
+storage/*.key
+bootstrap/cache/*.php
+
+Dockerfile
+.dockerignore

@@ -9,3 +9,8 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Files executed inside Linux containers must keep LF endings.
+*.sh text eol=lf
+docker/* text eol=lf
+Dockerfile text eol=lf

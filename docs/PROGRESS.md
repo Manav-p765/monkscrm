@@ -3,6 +3,7 @@
 | # | Step | Status |
 |---|------|--------|
 | 1 | Foundation | ✅ Done |
+| 1c | PostgreSQL + Docker readiness | ✅ Done |
 | 2 | Users / Settings / Audit log | ⬜ Not started |
 | 3 | Leads CRUD / list / search / filters / duplicates | ⬜ Not started |
 | 4 | Lead detail / notes / activities / follow-ups / timeline | ⬜ Not started |
@@ -35,6 +36,17 @@
   button, input/select/textarea, more details, badge, table, empty state, flash, confirm dialog,
   more menu). Existing pages rebuilt with them. Submit buttons show a loading state.
 - Feature tests: 54 passing.
+
+## Step 1c: PostgreSQL + Docker readiness (done)
+
+- Hosting decided: Docker on Render + Neon PostgreSQL (Singapore). Constraints recorded in CLAUDE.md "Hosting".
+- PostgreSQL is the default connection. Migrations use jsonb, string columns + PHP enum casts (no DB
+  enums), explicit FK indexes, and case-insensitive unique indexes on lower(email) and lookup names.
+- `Searchable` trait: the one case-insensitive search helper (ILIKE on pgsql, LIKE on sqlite).
+- `composer test:pgsql` runs the full suite on Postgres (`.env.testing.pgsql`, gitignored).
+  60/60 tests pass on both SQLite and PostgreSQL 17.
+- Production `Dockerfile` (FrankenPHP, PHP 8.4, non-root, listens on `$PORT`, caches built at start),
+  `.dockerignore`. Image built and smoke-tested locally against Postgres (login → dashboard).
 
 ### Carried forward
 - Step 2: audit helper, then write `auth.login`, `auth.login_failed`, `auth.logout`,

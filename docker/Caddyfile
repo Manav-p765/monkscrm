@@ -1,0 +1,13 @@
+{
+	frankenphp
+	# TLS is terminated by Render's load balancer; the container speaks plain HTTP.
+	auto_https off
+	admin off
+}
+
+# Render sets PORT; default 8080 for local runs.
+:{$PORT:8080} {
+	root * /app/public
+	encode zstd gzip
+	php_server
+}
