@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\LeadPriority;
+use App\Models\Concerns\Searchable;
 use Database\Factories\LeadFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +20,7 @@ use LogicException;
 class Lead extends Model
 {
     /** @use HasFactory<LeadFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, Searchable, SoftDeletes;
 
     /**
      * Ownership/system fields (reference, created_by, original_source_id, *_normalized,

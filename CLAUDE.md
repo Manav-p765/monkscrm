@@ -8,7 +8,8 @@ without authentication and correct authorization. Keep code clean and practical;
 over-engineer and do not add packages unless clearly needed.
 
 ## Stack (fixed)
-- Laravel 13, PHP 8.3+, MySQL 8 (SQLite in-memory for tests only)
+- Laravel 13, PHP 8.4 in production (8.3+ supported), **PostgreSQL** (Neon in production, 17 locally).
+  SQLite in-memory for the fast default test run only; `composer test:pgsql` runs the same suite on Postgres.
 - Blade + Alpine.js (**CSP build**, `@alpinejs/csp`) + Tailwind CSS 4 via Vite. No SPA, no React/Vue, no public JSON API.
 - Laravel Fortify for auth (login, logout, password reset, 2FA). Our own Blade views in `resources/views/auth`.
 - PHPUnit for tests (`php artisan test`).
@@ -27,6 +28,39 @@ over-engineer and do not add packages unless clearly needed.
    exports, imports, lead deletes/assignments) writes to the audit log via the helper (step 2).
    `audit_logs` is append-only: never update or delete rows.
 7. **Progress:** keep `docs/PROGRESS.md` updated after each step.
+8. **Text search:** always use the search helper, `->search($term, ['col1', 'col2'])` from
+   `App\Models\Concerns\Searchable` (ILIKE on PostgreSQL, LIKE on SQLite, wildcards escaped).
+   Never hand-write `like` / `ilike` / `lower(...)` comparisons: Postgres `LIKE` is case-sensitive.
+
+## Hosting
+
+- **Production:** Laravel in a Docker container (`Dockerfile`, FrankenPHP) on a **Render** web service
+  (free tier for now), database on **Neon** (serverless PostgreSQL). Both in **Singapore**.
+- Constraints every feature must respect:
+  - **The filesystem is ephemeral.** Never store anything on local disk that must survive a restart.
+    Sessions, cache and rate-limiter data live in the database. Uploaded import files are processed and
+    discarded within the request.
+  - **The app can be restarted or spun down at any time.** No in-memory state between requests.
+  - **Logs go to stderr** (`LOG_CHANNEL=stderr` in production), never to local log files.
+  - **No cron/scheduler is guaranteed** on the free tier. Features must not depend on scheduled jobs
+    (e.g. "overdue" is computed at query time). Queued jobs need a worker we don't have yet: work that
+    must happen goes in the request or `defer()`.
+  - **The database connection uses SSL** (`sslmode=require`) in production.
+- The image takes all configuration from env vars (no `.env` inside). Config/route/view/event caches are
+  built at container start (`docker/entrypoint.sh`), so never call `env()` outside `config/` files.
+
+## Database (PostgreSQL)
+
+- JSON columns are `jsonb`.
+- No DB-level enums: "enum" columns are `string` and the allowed values are enforced by PHP backed-enum
+  casts (`App\Enums\*`, which throw on unknown values) plus `Rule::enum()` in Form Requests. Adding a value
+  needs no migration.
+- Case-insensitive uniqueness uses expression indexes on `lower(column)` (users.email, tags/statuses/sources
+  name). Emails are also stored lowercased + trimmed by the User model.
+- PostgreSQL does **not** index foreign keys automatically: add `->index()` to every new FK column unless
+  it leads another index.
+- Migrations must run on both PostgreSQL and SQLite. Raw `DB::statement()` only for static DDL that both
+  support (like expression indexes), never with interpolated values.
 
 ## Conventions
 - Models use explicit `$fillable` (never `$guarded = []`). Ownership fields such as `created_by`,

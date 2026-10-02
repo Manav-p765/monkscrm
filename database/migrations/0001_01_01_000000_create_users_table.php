@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -14,9 +15,13 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email')->unique();
+            // Always stored lowercased + trimmed (User model). The lower(email) index below
+            // also makes uniqueness case-insensitive at the database level.
+            $table->string('email');
             $table->string('password');
-            $table->enum('role', ['admin', 'manager', 'sales'])->default('sales')->index();
+            // Plain string, not a DB enum: allowed values are enforced by the App\Enums\Role cast,
+            // so adding a role later needs no constraint migration. See CLAUDE.md "Database".
+            $table->string('role', 20)->default('sales')->index();
             $table->boolean('is_active')->default(true)->index();
             $table->timestamp('last_login_at')->nullable();
             $table->string('last_login_ip', 45)->nullable();
@@ -27,6 +32,9 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
         });
+
+        // Case-insensitive uniqueness (expression index; works on PostgreSQL and SQLite).
+        DB::statement('CREATE UNIQUE INDEX users_email_lower_unique ON users (lower(email))');
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();

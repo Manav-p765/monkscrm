@@ -8,6 +8,10 @@ return new class extends Migration
 {
     /**
      * Leads and everything that hangs off a lead: tags, notes, activities, follow-ups.
+     *
+     * PostgreSQL does not index foreign-key columns automatically, so every FK column that
+     * is not the leading column of another index gets an explicit index here.
+     * "Enum" columns are plain strings validated by PHP enum casts (see CLAUDE.md "Database").
      */
     public function up(): void
     {
@@ -38,13 +42,14 @@ return new class extends Migration
             $table->string('website', 255)->nullable();
             $table->text('description')->nullable();
 
-            $table->foreignId('lead_status_id')->constrained('lead_statuses')->restrictOnDelete();
-            $table->foreignId('lead_source_id')->nullable()->constrained('lead_sources')->nullOnDelete();
+            $table->foreignId('lead_status_id')->index()->constrained('lead_statuses')->restrictOnDelete();
+            $table->foreignId('lead_source_id')->nullable()->index()->constrained('lead_sources')->nullOnDelete();
             // Set once at creation; never changes afterwards (enforced in the Lead model).
-            $table->foreignId('original_source_id')->nullable()->constrained('lead_sources')->nullOnDelete();
-            $table->enum('priority', ['low', 'medium', 'high', 'urgent'])->nullable()->index();
-            $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->foreignId('original_source_id')->nullable()->index()->constrained('lead_sources')->nullOnDelete();
+            // low | medium | high | urgent, enforced by the App\Enums\LeadPriority cast.
+            $table->string('priority', 10)->nullable()->index();
+            $table->foreignId('assigned_to')->nullable()->index()->constrained('users')->nullOnDelete();
+            $table->foreignId('created_by')->index()->constrained('users')->restrictOnDelete();
 
             $table->timestamp('last_contacted_at')->nullable();
             $table->timestamp('next_follow_up_at')->nullable()->index();
@@ -53,22 +58,22 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            // lead_status_id, lead_source_id and assigned_to are indexed by their foreign keys.
             $table->index('created_at');
             $table->index('deleted_at');
         });
 
         Schema::create('lead_tag', function (Blueprint $table) {
             $table->foreignId('lead_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('tag_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('tag_id')->index()->constrained()->cascadeOnDelete();
 
+            // Also serves as the lead_id index.
             $table->primary(['lead_id', 'tag_id']);
         });
 
         Schema::create('lead_notes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('lead_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->restrictOnDelete();
+            $table->foreignId('user_id')->index()->constrained()->restrictOnDelete();
             $table->text('body');
             $table->timestamps();
 
@@ -79,33 +84,36 @@ return new class extends Migration
             $table->id();
             $table->foreignId('lead_id')->constrained()->cascadeOnDelete();
             // Nullable so automated "system" events can exist without an acting user.
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->enum('type', ['call', 'email', 'meeting', 'sms', 'follow_up', 'note', 'other', 'system']);
+            $table->foreignId('user_id')->nullable()->index()->constrained()->nullOnDelete();
+            // call | email | meeting | sms | follow_up | note | other | system (App\Enums\ActivityType).
+            $table->string('type', 20)->index();
             $table->text('description')->nullable();
             $table->string('outcome', 191)->nullable();
             $table->timestamp('occurred_at');
             // Structured data for system events (e.g. status change from/to).
-            $table->json('meta')->nullable();
+            $table->jsonb('meta')->nullable();
             $table->timestamps();
 
             $table->index(['lead_id', 'occurred_at']);
-            $table->index('type');
         });
 
         Schema::create('follow_ups', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('lead_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('lead_id')->index()->constrained()->cascadeOnDelete();
             $table->foreignId('assigned_to')->constrained('users')->restrictOnDelete();
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
-            $table->enum('type', ['call', 'email', 'meeting', 'other']);
+            $table->foreignId('created_by')->index()->constrained('users')->restrictOnDelete();
+            // call | email | meeting | other (App\Enums\FollowUpType).
+            $table->string('type', 20);
             $table->timestamp('due_at');
             $table->text('notes')->nullable();
-            // "Overdue" is not stored: it is pending AND due_at < now().
-            $table->enum('status', ['pending', 'completed', 'cancelled'])->default('pending');
+            // pending | completed | cancelled (App\Enums\FollowUpStatus).
+            // "Overdue" is not stored: it is pending AND due_at < now(), computed at query time.
+            $table->string('status', 20)->default('pending');
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
 
             $table->index(['status', 'due_at']);
+            // Also serves as the assigned_to index.
             $table->index(['assigned_to', 'status', 'due_at']);
         });
     }
