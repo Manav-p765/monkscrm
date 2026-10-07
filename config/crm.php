@@ -3,6 +3,12 @@
 return [
 
     /*
+    | Everything is stored in UTC (config('app.timezone')). Dates are shown in, and dates users
+    | type are read as, this timezone. No settings UI: our team works in India.
+    */
+    'display_timezone' => 'Asia/Kolkata',
+
+    /*
     | Who may do what: the single source for the gates (AppServiceProvider defines one gate per
     | `gate` entry), the policies (which read the role lists below) and the read-only permissions
     | table on the Settings page. Roles are App\Enums\Role values. `setting` marks a sales permission

@@ -25,7 +25,7 @@
             </div>
             <div>
                 <dt class="text-3xs font-semibold text-slate-500 uppercase">Last Signed In</dt>
-                <dd class="mt-0.5 font-medium text-slate-800">{{ $user->last_login_at?->format('j M Y, H:i T') ?? 'Never' }}</dd>
+                <dd class="mt-0.5 font-medium text-slate-800"><x-date :value="$user->last_login_at" empty="Never" /></dd>
             </div>
         </dl>
         <p class="text-xs text-slate-500">To change your name or email address, ask an administrator.</p>

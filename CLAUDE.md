@@ -36,6 +36,9 @@ over-engineer and do not add packages unless clearly needed.
    `currency` (`App\Enums\Currency`). Never add amounts in different currencies together and never
    convert: totals are one entry per currency (`Money::totals()` + `<x-money :totals>`). Validate
    currencies with `App\Rules\EnabledCurrency`.
+10. **Dates and times:** stored in UTC, shown in `config('crm.display_timezone')` (Asia/Kolkata). Never format
+    dates directly (no `->format()` / `diffForHumans()` in views): use `<x-date>` / `App\Support\Dates`.
+    Dates users type are IST: convert with `Dates::fromInput()` before saving, `Dates::toInput()` to refill forms.
 
 ## Hosting
 
@@ -120,7 +123,7 @@ The prototype's data, auth and permission logic is fake: never copy it (audit §
 - **Feedback** after every action ("Lead saved", "3 leads assigned to Priya") via `<x-flash>`.
 - **Glossary** below: use exactly those words (the prototype says "Rep", "Assignee" and "ARR"; we say
   "Assigned to" and "Deal value").
-- **Never format dates or money directly:** use `<x-money>` / `App\Support\Money` and the date helper.
+- **Never format dates or money directly:** use `<x-money>` / `App\Support\Money` and `<x-date>` / `App\Support\Dates`.
 - Lists paginate at 25 rows. Under our CSP, all Alpine logic goes in `resources/js/app.js`
   (`Alpine.data`); no inline scripts or `style=""`.
 - Laptop and tablet widths must work well; phones usable.
@@ -149,6 +152,7 @@ pages that duplicate a component; if something is missing, extend a component (o
 | `<x-more-menu>` | Secondary actions in the page header (layout's `more` slot). |
 | `<x-stat label [tone] [hint] [href]>` | Stat card (dashboard, reports, import validation). |
 | `<x-money>` | Every money amount: `:amount` (minor units) + `:currency`, or `:totals` ("$12,400 · ₹3,50,000"). |
+| `<x-date :value [relative] [day]>` | Every date/time, shown in IST: "2 Oct 2026, 3:45 pm"; `relative` = "2 hours ago" with the full date as tooltip. |
 
 ## Glossary: use exactly these words everywhere
 
