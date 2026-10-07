@@ -12,7 +12,7 @@
     $current = (string) old($key, $value instanceof \BackedEnum ? $value->value : $value);
 @endphp
 
-<x-field :id="$id" :label="$label" :required="$required" :hint="$hint" :error="$error" :aside="$aside">
+<x-field :id="$id" :label="$label" :required="$required" :hint="$hint" :error="$error" :aside="$aside" :label-hidden="$size === 'filter'">
     <select id="{{ $id }}" name="{{ $name }}"
             @if ($required) required @endif
             @if ($error) aria-invalid="true" @endif

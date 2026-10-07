@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PlaceholderController;
 use App\Http\Controllers\ProfileController;
@@ -53,10 +54,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:manage-settings')
         ->name('settings.index');
 
-    Route::get('/audit-log', PlaceholderController::class)
-        ->defaults('section', 'Audit log')
-        ->middleware('can:view-audit-log')
-        ->name('audit-log.index');
+    Route::middleware('can:view-audit-log')->group(function () {
+        Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
+        Route::get('/audit-log/{auditLog}', [AuditLogController::class, 'show'])->name('audit-log.show');
+    });
 });
 
 // Unknown URLs: plain 404, no hints about what exists.

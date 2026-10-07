@@ -11,7 +11,7 @@
     $describedBy = trim(($hint ? $id.'-hint ' : '').($error ? $id.'-error' : ''));
 @endphp
 
-<x-field :id="$id" :label="$label" :required="$required" :hint="$hint" :error="$error" :aside="$aside">
+<x-field :id="$id" :label="$label" :required="$required" :hint="$hint" :error="$error" :aside="$aside" :label-hidden="$size === 'filter'">
     <textarea id="{{ $id }}" name="{{ $name }}" rows="{{ $rows }}"
               @if ($required) required @endif
               @if ($error) aria-invalid="true" @endif

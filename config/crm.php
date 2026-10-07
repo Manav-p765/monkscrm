@@ -35,6 +35,43 @@ return [
     ],
 
     /*
+    | Readable names for audit log actions (Audit Log page). Unknown actions fall back to the raw key.
+    */
+    'audit_actions' => [
+        'auth.login' => 'Signed in',
+        'auth.login_failed' => 'Failed sign-in',
+        'auth.lockout' => 'Locked out (too many attempts)',
+        'auth.logout' => 'Signed out',
+        'auth.password_reset_requested' => 'Requested a password reset',
+        'auth.password_reset_completed' => 'Reset their password',
+        'auth.password_changed' => 'Changed their password',
+        'auth.two_factor_enabled' => 'Turned on two-step sign-in',
+        'auth.two_factor_disabled' => 'Turned off two-step sign-in',
+        'auth.forced_logout_inactive' => 'Signed out (account deactivated)',
+        'user.invited' => 'Invited a user',
+        'user.invite_resent' => 'Resent an invite',
+        'user.updated' => 'Updated a user',
+        'user.role_changed' => 'Changed a user’s role',
+        'user.deactivated' => 'Deactivated a user',
+        'user.reactivated' => 'Reactivated a user',
+        'user.password_reset_link_sent' => 'Sent a password reset link',
+        'user.two_factor_reset_by_admin' => 'Turned off a user’s two-step sign-in',
+        'user.sessions_revoked' => 'Signed a user out everywhere',
+        'team.created' => 'Added a team',
+        'team.updated' => 'Renamed a team',
+        'settings.updated' => 'Changed settings',
+        'status.created' => 'Added a status',
+        'status.updated' => 'Changed a status',
+        'statuses.reordered' => 'Reordered statuses',
+        'source.created' => 'Added a source',
+        'source.updated' => 'Changed a source',
+        'sources.reordered' => 'Reordered sources',
+        'tag.created' => 'Added a tag',
+        'tag.updated' => 'Changed a tag',
+        'tag.deleted' => 'Deleted a tag',
+    ],
+
+    /*
     | Colours an admin can pick for statuses and tags: exactly the prototype's palette
     | (design/src/utils/crmHelpers.ts getStatusBadgeClasses). The hex value is what we store;
     | <x-badge> maps it back to the prototype's Tailwind classes.

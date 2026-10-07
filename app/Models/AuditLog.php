@@ -55,6 +55,34 @@ class AuditLog extends Model
 
     public function subject(): MorphTo
     {
-        return $this->morphTo();
+        return $this->morphTo()->withoutGlobalScopes();
+    }
+
+    /** "Signed in", "Changed a user’s role", … (config/crm.php audit_actions). */
+    public function actionLabel(): string
+    {
+        return config("crm.audit_actions.{$this->action}", $this->action);
+    }
+
+    /** What the action was about, for people: a user's name, a lead reference, a status name. */
+    public function subjectLabel(): ?string
+    {
+        if (! $this->subject_type) {
+            return null;
+        }
+
+        $subject = $this->subject;
+        $type = class_basename($this->subject_type);
+
+        return match (true) {
+            $subject instanceof Lead => $subject->reference,
+            $subject !== null && isset($subject->name) => $subject->name,
+            default => "{$type} #{$this->subject_id}",
+        };
+    }
+
+    public function subjectType(): ?string
+    {
+        return $this->subject_type ? \Illuminate\Support\Str::headline(class_basename($this->subject_type)) : null;
     }
 }

@@ -37,6 +37,15 @@ Alpine.data('globalSearch', () => ({
     },
 }));
 
+// <x-filter-bar>: a GET form that submits as soon as a filter changes.
+Alpine.data('autoSubmit', () => ({
+    submit(event) {
+        if (event.target.matches('select, input[type="date"], input[type="checkbox"], input[type="radio"]')) {
+            this.$el.requestSubmit();
+        }
+    },
+}));
+
 // <x-flash>: success messages fade out after a few seconds; errors stay until dismissed.
 Alpine.data('flash', () => ({
     visible: true,

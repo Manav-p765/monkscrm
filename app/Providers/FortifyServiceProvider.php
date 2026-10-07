@@ -6,6 +6,7 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Http\Responses\PasswordResetLinkRequestedResponse;
 use App\Models\User;
+use App\Support\Audit;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -70,6 +71,10 @@ class FortifyServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($throttleKey)->response(function (Request $request, array $headers) {
                 $seconds = (int) ($headers['Retry-After'] ?? 60);
+
+                Audit::log('auth.lockout', meta: [
+                    'email' => mb_substr((string) $request->input(Fortify::username()), 0, 191),
+                ]);
 
                 return back()
                     ->withInput($request->only(Fortify::username()))

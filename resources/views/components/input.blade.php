@@ -19,7 +19,7 @@
     $iconClass = $size === 'lg' ? 'left-3.5 size-4' : 'left-3 size-3.75';
 @endphp
 
-<x-field :id="$id" :label="$label" :required="$required" :hint="$hint" :error="$error" :aside="$aside">
+<x-field :id="$id" :label="$label" :required="$required" :hint="$hint" :error="$error" :aside="$aside" :label-hidden="$size === 'filter'">
     <div @if ($reveal) x-data="passwordReveal" @endif class="relative">
         @if ($icon)
             <x-dynamic-component :component="'lucide-'.$icon" :class="'pointer-events-none absolute top-1/2 -translate-y-1/2 text-slate-400 '.$iconClass" aria-hidden="true" />
