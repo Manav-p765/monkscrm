@@ -133,7 +133,7 @@ same badge look from hex (tinted background + dot).
 - Breakpoints: Tailwind defaults; only `sm` (640px) and `lg` (1024px) are used. The sidebar never
   collapses, so phone widths are not handled.
 
-### Conflicts with our CLAUDE.md UI rules (see "Needs my decision" D1)
+### Conflicts with our CLAUDE.md UI rules (settled by D1: copy the prototype)
 
 | Prototype | Our rule |
 |---|---|
@@ -588,24 +588,19 @@ The header search box still shows "ster" in some later shots (a leftover from sh
 
 ---
 
-## Needs my decision
+## Decisions (all settled, 2026-10-07)
 
-**Settled by the scope update (2026-10-07):** D2 (per-lead deal value + currency), D4 (Kanban in
-step 3), D11 (all included). D5 is partly settled (Reports in step 5; who can see it is still open),
-and so is D8 (teams, job title and phone are in; whether teams limit lead visibility is still open).
-D9 is included because the prototype has status descriptions and default status/source.
-
-| # | Question | Recommendation |
+| # | Question | Decision |
 |---|---|---|
-| D1 | **"Match exactly" vs our UI rules.** Indigo vs blue-700 accent, Plus Jakarta Sans vs system font, 12px vs 15px base text, uppercase labels, cards + shadows, several primary buttons, tabs in the drawer. Which wins? | Adopt the prototype's **layout, flows, spacing and components**, but keep our rules on base size (15px, for non-technical users), sentence case, one primary button, and CSP (no CDN). Accent color and font are taste: pick one; if Plus Jakarta Sans, self-host it. Update CLAUDE.md to match whatever you choose. |
-| D2 | **Deal value & revenue** (estimated value field, "Closed Won ARR", pipeline $, reports $). Add it? Which currency (prototype: USD)? | Add `estimated_value` + a currency setting (INR likely); it drives a lot of the dashboard. |
-| D3 | **Lead detail as slide-over drawer** (prototype) or a full page `/leads/{id}`? | Full page with the same header/quick actions, timeline + notes + follow-ups as one page (no tabs), or keep the drawer *without* tabs. A page gives deep links and a working back button. |
-| D4 | **Kanban pipeline view** with drag-and-drop. MVP or later? | Phase 2 (right after step 4); it needs only status-change authorization + an audit/activity entry. |
-| D5 | **Reports page** (KPIs, funnel, rep scorecard). Who sees it, and when? | Phase 2; admin + manager only, visibility-scoped. |
-| D6 | **Live-as-you-type** global search dropdown and duplicate warning need small authenticated endpoints (HTML fragments). OK, or submit-time only? | Submit-time for MVP (server re-renders with warning + "Save anyway" for managers/admins); live versions later as HTML-fragment endpoints. |
-| D7 | **Import wizard on an ephemeral filesystem.** A 6-step wizard needs parsed rows kept between requests. Store them in the DB (`import_rows` / `imports.rows`), or collapse to fewer steps in one request? | DB staging (`import_rows`), file deleted at upload, rows deleted when the import finishes or is abandoned. |
-| D8 | **Teams / departments, job title, user phone.** Add them? | Job title + phone: yes (cheap). Teams: only if managers should be limited to their team's leads; otherwise skip. |
-| D9 | **Status description, default status / default source settings.** | Yes; small and useful. |
-| D10 | **Can sales see unassigned leads?** The prototype says yes by default. | No by default (only assigned), unless your PRD says unassigned leads form a shared pool. |
-| D11 | **Bulk add tag, permission matrix help table, un-complete follow-up.** Include them? | Bulk tag + un-complete: yes (small). Matrix table: Phase 2. |
-| D12 | **The `design/` folder itself:** keep it untracked (nested repo), ignore it entirely, or vendor it (delete `design/.git`) so the team shares it? | Add `/design/` to `.gitignore` and keep only `docs/DESIGN_AUDIT.md` + screenshots in our repo, since the prototype has its own GitHub repo. |
+| D1 | Copy the prototype's look exactly, or keep our UI rules where they differ? | **Copy the prototype exactly** (indigo accent, Plus Jakarta Sans, its sizes, labels, cards and shadows, layout). CSP still applies, so the font is self-hosted and nothing loads from a CDN. CLAUDE.md "UI rules" must be updated to match. |
+| D2 | Deal value and currency? | **Per-lead `deal_value` + `currency`**, with `enabled_currencies` / `default_currency` settings. See "Deal value and currency" at the top. |
+| D3 | Lead detail as a slide-over or a full page? | **Slide-over panel with its own URL** (deep links and the back button work). |
+| D4 | Kanban board: MVP or later? | **MVP, step 3.** |
+| D5 | Reports: who sees it, and when? | **Admin and manager**, step 5, visibility-scoped. |
+| D6 | Live-as-you-type search and duplicate warnings, or on submit? | **As-you-type search**, returning only leads the user may see (same visibility scope and policy as every other lead query). |
+| D7 | Where the import wizard keeps rows between steps | **Encrypted `import_rows` table**; the uploaded file is deleted in the upload request. |
+| D8 | Teams, job title, phone; do teams limit visibility? | All three are in. **Teams do not limit which leads a manager sees**, for now. |
+| D9 | Status description, default status / default source | **Included.** |
+| D10 | Can Sales see unassigned leads? | **Yes, as a setting that defaults to on.** |
+| D11 | Bulk tagging, permissions table, reopen follow-up | **All included.** |
+| D12 | What to do with `design/` | **Stays on disk, gitignored** (`/design/` in `.gitignore`); only this audit and the screenshots live in our repo. |

@@ -38,6 +38,25 @@ class MoneyTest extends TestCase
         $this->assertSame('CA$10', Money::format(1000, 'CAD'));
     }
 
+    public function test_formatter_matches_intl_for_inr_and_usd(): void
+    {
+        if (! extension_loaded('intl')) {
+            $this->markTestSkipped('intl extension not loaded.');
+        }
+
+        $intl = function (int $minor, string $currency, string $locale): string {
+            $formatted = (new \NumberFormatter($locale, \NumberFormatter::CURRENCY))->formatCurrency($minor / 100, $currency);
+
+            // Our formatter hides zero decimals; intl always shows them.
+            return str_ends_with($formatted, '.00') ? substr($formatted, 0, -3) : $formatted;
+        };
+
+        foreach ([5, 99900, 100000, 10000000, 123456789, 1234567890, 98765432101] as $minor) {
+            $this->assertSame($intl($minor, 'INR', 'en_IN'), Money::format($minor, 'INR'), "INR {$minor}");
+            $this->assertSame($intl($minor, 'USD', 'en_US'), Money::format($minor, 'USD'), "USD {$minor}");
+        }
+    }
+
     public function test_mixed_currency_totals_are_never_added_together(): void
     {
         $this->seed(DatabaseSeeder::class);

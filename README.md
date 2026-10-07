@@ -23,11 +23,21 @@ npm run build                   # or `npm run dev` while working on the UI
 php artisan serve               # http://localhost:8000
 ```
 
-No local PostgreSQL? Run one in Docker (data persists in a named volume):
+No local PostgreSQL? Run one in Docker (data persists in a named volume). The local `.env` and
+`.env.testing.pgsql` expect it on port 5434:
 ```bash
 docker run -d --name monks-crm-postgres -e POSTGRES_PASSWORD=<choose-one> -e POSTGRES_DB=monks_crm \
-  -p 127.0.0.1:5432:5432 -v monks-crm-pgdata:/var/lib/postgresql/data postgres:17-alpine
+  -p 127.0.0.1:5434:5432 -v monks-crm-pgdata:/var/lib/postgresql/data postgres:17-alpine
 ```
+
+Windows: use the official PHP 8.4 zip from windows.php.net (x64, thread safe) unpacked to `D:\php84`, with
+`pdo_pgsql pgsql pdo_sqlite sqlite3 mbstring openssl fileinfo intl zip gd curl sodium` enabled in
+`php.ini`, `curl.cainfo`/`openssl.cafile` pointing at a CA bundle (curl.se/ca/cacert.pem), and `D:\php84`
+first on your PATH.
+
+UI work: the visual reference is the prototype. Clone the design repo into `design/` to work on the UI
+(`git clone https://github.com/hiteshhmalviyaa-bit/CRM- design`). It is gitignored and never shipped;
+screenshots of it are in `docs/design-screens/`.
 
 Optional demo data (local only, refuses in production):
 ```bash
@@ -45,7 +55,7 @@ cp .env.testing.pgsql.example .env.testing.pgsql   # fill in host/port/user/pass
 composer test:pgsql
 ```
 
-If your local PHP has no `pdo_pgsql`, run the same suite inside the image's `base` stage. The project
+If your PHP has no `pdo_pgsql` (e.g. Herd Lite), install the native PHP above, or run the same suite inside the image's `base` stage. The project
 is streamed into the container because Windows/macOS bind mounts make Laravel very slow:
 ```bash
 docker build --target base -t monks-crm-php:base .

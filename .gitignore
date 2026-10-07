@@ -37,3 +37,5 @@ Thumbs.db
 !/design/.env.example
 /design/node_modules
 /design/dist
+# The prototype stays on disk only (design audit D12).
+/design/

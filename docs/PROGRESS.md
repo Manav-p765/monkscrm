@@ -56,7 +56,7 @@
 - Findings, feature map, data model gaps, security issues and the frontend recommendation (keep
   Blade + Alpine) are in `docs/DESIGN_AUDIT.md`; screenshots in `docs/design-screens/`.
 - **Scope:** every prototype feature is in the MVP, except the demo-only items listed in
-  `docs/DESIGN_AUDIT.md` "Excluded from the MVP". Remaining open decisions: see the end of the audit.
+  `docs/DESIGN_AUDIT.md` "Excluded from the MVP". Decisions D1–D12 are all settled (end of the audit).
 - **Currency groundwork:** `leads.deal_value` (bigint, minor units) + `leads.currency` (ISO 4217,
   not null); `App\Enums\Currency` (fixed list USD, INR, EUR, GBP, AUD, CAD; `enabled()`, `default()`);
   settings `enabled_currencies` (default USD, INR) and `default_currency` (default USD); new leads get
@@ -73,7 +73,7 @@
 - Users: list, create user via emailed set-password link (never an admin-typed password), edit role,
   team, job title, phone; deactivate/reactivate; send password reset link. Manager: read-only
   directory. Read-only role & permissions table on the Users page.
-- Teams (needs migration: see audit G2 / open decision on whether teams limit lead visibility).
+- Teams (needs migration: see audit G2 / teams do not limit lead visibility, D8).
 - Settings: statuses (add, rename, color, description, reorder, enable/disable, won/lost, delete only
   if unused), sources (add, enable/disable; system sources protected), tags (add, color, delete),
   "Sales can view all leads", duplicate rules (read-only), default status and default source,
