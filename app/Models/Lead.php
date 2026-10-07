@@ -64,6 +64,13 @@ class Lead extends Model
             'last_contacted_at' => 'datetime',
             'next_follow_up_at' => 'datetime',
             'last_activity_at' => 'datetime',
+            // Milestone stamps: set once by the status-change logic (step 3), never mass-assigned.
+            'first_contacted_at' => 'datetime',
+            'qualified_at' => 'datetime',
+            'meeting_booked_at' => 'datetime',
+            'proposal_sent_at' => 'datetime',
+            'won_at' => 'datetime',
+            'lost_at' => 'datetime',
         ];
     }
 

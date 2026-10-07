@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\Currency;
+use App\Models\LeadSource;
+use App\Models\LeadStatus;
 use App\Models\Setting;
 use Illuminate\Database\Seeder;
 
@@ -20,6 +22,14 @@ class SettingSeeder extends Seeder
             // Currencies leads may use (subset of App\Enums\Currency) and the default for new leads.
             'enabled_currencies' => Currency::DEFAULT_ENABLED,
             'default_currency' => Currency::DEFAULT,
+            // Sales see unassigned leads (shared pool) unless an admin turns this off.
+            'sales_can_view_unassigned' => true,
+            // Defaults for new leads (must point at an active status / source).
+            'default_status_id' => LeadStatus::query()->whereRaw('lower(name) = ?', ['new'])->value('id'),
+            'default_source_id' => LeadSource::query()->whereRaw('lower(name) = ?', ['manual entry'])->value('id'),
+            // Import limits (admin-adjustable up to 20 MB / 20,000 rows).
+            'import_max_file_mb' => 5,
+            'import_max_rows' => 5000,
         ];
 
         foreach ($defaults as $key => $value) {

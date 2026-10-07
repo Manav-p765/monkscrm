@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\LeadMilestone;
 use App\Enums\LeadStatusType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ class LeadStatus extends Model
     /**
      * @var list<string>
      */
-    protected $fillable = ['name', 'color', 'sort_order', 'is_active', 'type'];
+    protected $fillable = ['name', 'color', 'sort_order', 'is_active', 'type', 'description', 'milestone'];
 
     protected function casts(): array
     {
@@ -20,6 +21,7 @@ class LeadStatus extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
             'type' => LeadStatusType::class,
+            'milestone' => LeadMilestone::class,
         ];
     }
 

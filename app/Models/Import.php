@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One import run. The uploaded file itself is never kept after processing.
@@ -30,6 +31,9 @@ class Import extends Model
         'error_report',
     ];
 
+    /** Statuses after which the staged rows are no longer needed. */
+    public const FINISHED_STATUSES = ['completed', 'cancelled'];
+
     protected function casts(): array
     {
         return [
@@ -38,8 +42,26 @@ class Import extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        // No cron on our hosting: every new import cleans up abandoned staging rows.
+        static::creating(fn () => ImportRow::purgeStale());
+
+        // Staged rows hold contact details; drop them as soon as the import is done.
+        static::saved(function (Import $import) {
+            if ($import->wasChanged('status') && in_array($import->status, self::FINISHED_STATUSES, true)) {
+                $import->rows()->delete();
+            }
+        });
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function rows(): HasMany
+    {
+        return $this->hasMany(ImportRow::class);
     }
 }

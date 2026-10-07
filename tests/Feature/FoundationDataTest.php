@@ -28,7 +28,14 @@ class FoundationDataTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $this->seed(DatabaseSeeder::class); // idempotent
 
-        $this->assertSame(10, LeadStatus::count());
+        $this->assertSame(12, LeadStatus::count());
+        $this->assertSame(
+            array_column(\Database\Seeders\LeadStatusSeeder::DEFAULTS, 0),
+            LeadStatus::ordered()->pluck('name')->all()
+        );
+        $this->assertTrue(Setting::getValue('sales_can_view_unassigned'));
+        $this->assertSame(LeadStatus::where('name', 'New')->value('id'), Setting::getValue('default_status_id'));
+        $this->assertSame(LeadSource::where('name', 'Manual Entry')->value('id'), Setting::getValue('default_source_id'));
         $this->assertSame('New', LeadStatus::ordered()->first()->name);
         $this->assertSame(['Won'], LeadStatus::where('type', 'won')->pluck('name')->all());
         $this->assertSame(11, LeadSource::count());
@@ -36,6 +43,32 @@ class FoundationDataTest extends TestCase
         $this->assertFalse(Setting::getValue('sales_can_view_all_leads'));
         $this->assertTrue(Setting::getValue('allow_duplicate_override'));
         $this->assertSame(0, User::count());
+    }
+
+    public function test_status_seeder_upgrades_an_existing_database_without_duplicates(): void
+    {
+        // A database seeded with the old 10 statuses, then customised by an admin.
+        $old = ['New', 'Attempted Contact', 'Contacted', 'Follow-Up Required', 'Qualified', 'Opportunity', 'Won', 'Lost', 'Not Interested', 'Invalid'];
+        foreach ($old as $i => $name) {
+            LeadStatus::create(['name' => $name, 'color' => '#123456', 'type' => in_array($name, ['Won']) ? 'won' : (in_array($name, ['Lost', 'Not Interested', 'Invalid']) ? 'lost' : 'open'), 'sort_order' => ($i + 1) * 10]);
+        }
+        LeadStatus::where('name', 'Qualified')->update(['name' => 'QUALIFIED', 'description' => 'Our own words']);
+        LeadStatus::create(['name' => 'Custom Stage', 'color' => '#abcdef', 'type' => 'open', 'sort_order' => 55]);
+
+        $this->seed(\Database\Seeders\LeadStatusSeeder::class);
+        $this->seed(\Database\Seeders\LeadStatusSeeder::class); // idempotent
+
+        $this->assertSame(13, LeadStatus::count());
+        $this->assertSame(
+            ['New', 'Attempted Contact', 'Contacted', 'Follow-Up Required', 'QUALIFIED', 'Custom Stage', 'Meeting Booked', 'Proposal Sent', 'Opportunity', 'Won', 'Lost', 'Not Interested', 'Invalid'],
+            LeadStatus::ordered()->pluck('name')->all()
+        );
+
+        $qualified = LeadStatus::where('name', 'QUALIFIED')->first();
+        $this->assertSame('#123456', $qualified->color);          // admin's colour kept
+        $this->assertSame('Our own words', $qualified->description); // admin's description kept
+        $this->assertSame(\App\Enums\LeadMilestone::Qualified, $qualified->milestone); // empty milestone filled
+        $this->assertSame(\App\Enums\LeadMilestone::Lost, LeadStatus::where('name', 'Invalid')->first()->milestone);
     }
 
     public function test_lead_gets_reference_normalized_contacts_and_original_source(): void
