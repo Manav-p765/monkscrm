@@ -31,6 +31,11 @@ over-engineer and do not add packages unless clearly needed.
 8. **Text search:** always use the search helper, `->search($term, ['col1', 'col2'])` from
    `App\Models\Concerns\Searchable` (ILIKE on PostgreSQL, LIKE on SQLite, wildcards escaped).
    Never hand-write `like` / `ilike` / `lower(...)` comparisons: Postgres `LIKE` is case-sensitive.
+9. **Money:** never format money directly (no `number_format`, no hand-written symbols). Use
+   `App\Support\Money` / `<x-money>`. Amounts are integer minor units (cents/paise) with a per-lead
+   `currency` (`App\Enums\Currency`). Never add amounts in different currencies together and never
+   convert: totals are one entry per currency (`Money::totals()` + `<x-money :totals>`). Validate
+   currencies with `App\Rules\EnabledCurrency`.
 
 ## Hosting
 
@@ -101,6 +106,7 @@ styles on individual pages; if something is missing, extend a component (or add 
 | `<x-flash>` | Rendered by layouts. Controllers use `->with('status', 'Lead saved')` (fades out) or `->with('error', '…')` (stays). |
 | `<x-confirm-dialog>` | Required for every destructive action. The title names the item. |
 | `<x-more-menu>` | Secondary actions in the page header (via the layout's `more` slot). |
+| `<x-money>` | Every money amount: `:amount` (minor units) + `:currency`, or `:totals` (per-currency totals, "$12,400 · ₹3,50,000"). |
 
 ### Layout
 - One sidebar + one main content area. No nested menus, no tabs inside tabs, no dropdown navigation.
@@ -154,6 +160,7 @@ styles on individual pages; if something is missing, extend a component (or add 
 | **Status** | Where a lead is in the pipeline (New, Contacted, Won, …). |
 | **Source** | Where a lead came from (Website, Referral, …). "Original source" never changes. |
 | **Priority** | Low, Medium, High, Urgent. |
+| **Deal value** | The expected value of a lead, in that lead's currency. Never "ARR", "revenue" or "amount" in the UI. |
 | **Assigned to** | The user responsible for a lead or follow-up. Never "owner" or "rep". |
 | **Follow-up** | A scheduled next step with a due date (plural "Follow-ups"). **Overdue** = still pending and past its due date. |
 | **Activity** | Something that happened on a lead (call, email, meeting, …), shown on the timeline. |

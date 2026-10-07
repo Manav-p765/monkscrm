@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Currency;
 use App\Enums\LeadPriority;
 use App\Models\Lead;
 use App\Models\LeadSource;
@@ -34,6 +35,9 @@ class LeadFactory extends Factory
             'priority' => fake()->optional(0.7)->randomElement(LeadPriority::cases()),
             'created_by' => User::factory(),
             'next_follow_up_at' => fake()->optional(0.5)->dateTimeBetween('-10 days', '+20 days'),
+            // Minor units (cents/paise).
+            'deal_value' => fake()->boolean(60) ? fake()->numberBetween(50, 5000) * 10000 : null,
+            'currency' => fake()->randomElement(Currency::DEFAULT_ENABLED),
         ];
     }
 }

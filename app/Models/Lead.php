@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Currency;
 use App\Enums\LeadPriority;
 use App\Models\Concerns\Searchable;
 use Database\Factories\LeadFactory;
@@ -50,12 +51,16 @@ class Lead extends Model
         'priority',
         'assigned_to',
         'next_follow_up_at',
+        'deal_value',
+        'currency',
     ];
 
     protected function casts(): array
     {
         return [
             'priority' => LeadPriority::class,
+            'deal_value' => 'integer',
+            'currency' => Currency::class,
             'last_contacted_at' => 'datetime',
             'next_follow_up_at' => 'datetime',
             'last_activity_at' => 'datetime',
@@ -71,6 +76,7 @@ class Lead extends Model
 
         static::creating(function (Lead $lead) {
             $lead->original_source_id ??= $lead->lead_source_id;
+            $lead->currency ??= Currency::default();
         });
 
         static::created(function (Lead $lead) {

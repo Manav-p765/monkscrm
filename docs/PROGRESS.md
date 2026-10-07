@@ -4,10 +4,11 @@
 |---|------|--------|
 | 1 | Foundation | ✅ Done |
 | 1c | PostgreSQL + Docker readiness | ✅ Done |
-| 2 | Users / Settings / Audit log | ⬜ Not started |
-| 3 | Leads CRUD / list / search / filters / duplicates | ⬜ Not started |
-| 4 | Lead detail / notes / activities / follow-ups / timeline | ⬜ Not started |
-| 5 | Dashboard | ⬜ Not started |
+| 1d | Design audit + currency groundwork | ✅ Done |
+| 2 | Users / teams / settings / currencies / audit log | ⬜ Not started |
+| 3 | Leads CRUD / list / search / filters / duplicates / bulk actions / Kanban | ⬜ Not started |
+| 4 | Lead detail / notes / activities / follow-ups / timeline / alerts bell | ⬜ Not started |
+| 5 | Dashboard / Reports | ⬜ Not started |
 | 6 | Import / export | ⬜ Not started |
 | 7 | Hardening / 2FA enforcement / deploy | ⬜ Not started |
 
@@ -47,6 +48,70 @@
   60/60 tests pass on both SQLite and PostgreSQL 17.
 - Production `Dockerfile` (FrankenPHP, PHP 8.4, non-root, listens on `$PORT`, caches built at start),
   `.dockerignore`. Image built and smoke-tested locally against Postgres (login → dashboard).
+
+## Step 1d: Design audit + currency groundwork (done, 2026-10-07)
+
+- Google AI Studio prototype cloned into `design/` (reference only; nested git repo, gitignored
+  secrets/build output, excluded from the Docker image).
+- Findings, feature map, data model gaps, security issues and the frontend recommendation (keep
+  Blade + Alpine) are in `docs/DESIGN_AUDIT.md`; screenshots in `docs/design-screens/`.
+- **Scope:** every prototype feature is in the MVP, except the demo-only items listed in
+  `docs/DESIGN_AUDIT.md` "Excluded from the MVP". Remaining open decisions: see the end of the audit.
+- **Currency groundwork:** `leads.deal_value` (bigint, minor units) + `leads.currency` (ISO 4217,
+  not null); `App\Enums\Currency` (fixed list USD, INR, EUR, GBP, AUD, CAD; `enabled()`, `default()`);
+  settings `enabled_currencies` (default USD, INR) and `default_currency` (default USD); new leads get
+  the default currency; `App\Support\Money` (formatting with Indian grouping for INR, decimals hidden
+  when zero, per-currency totals, never summed across currencies) and `<x-money>`;
+  `App\Rules\EnabledCurrency` (enabled list, but a lead keeps a since-disabled currency).
+- Tests: 65 passing + 1 skipped (SQLite). `composer test:pgsql` was not run: the local PHP
+  (Herd Lite) has no `pdo_pgsql`.
+
+## MVP plan (all prototype features)
+
+### Step 2: Users / teams / settings / currencies / audit log
+- Audit helper; auth events (see "Carried forward").
+- Users: list, create user via emailed set-password link (never an admin-typed password), edit role,
+  team, job title, phone; deactivate/reactivate; send password reset link. Manager: read-only
+  directory. Read-only role & permissions table on the Users page.
+- Teams (needs migration: see audit G2 / open decision on whether teams limit lead visibility).
+- Settings: statuses (add, rename, color, description, reorder, enable/disable, won/lost, delete only
+  if unused), sources (add, enable/disable; system sources protected), tags (add, color, delete),
+  "Sales can view all leads", duplicate rules (read-only), default status and default source,
+  **currencies** (enable from the fixed list; default must be enabled; can't disable the default).
+  Every settings change is audit-logged, including currency changes.
+- My profile: name, phone, job title (password + 2FA already done).
+
+### Step 3: Leads + Kanban
+- Visibility scope + real `LeadPolicy`.
+- List: header search, quick filters (all, assigned to me, follow-up due/overdue, unassigned, urgent &
+  high), filters (status, assigned to, source, priority, tag, **currency**), sort, 25 per page, empty
+  states. Global header search with the `/` shortcut.
+- Create/edit form: all prototype fields (incl. address line 2), **deal value + currency selector**
+  (enabled currencies only, default `default_currency`; validated with `EnabledCurrency`), tags,
+  initial note. Duplicate detection with override for managers/admins.
+- Bulk: change status, assign/unassign, add tag, archive (confirm, admin). Assignments audited.
+- **Kanban board:** columns = active statuses; drag & drop + step buttons; status change writes an
+  activity; column totals one line per currency (`<x-money :totals>`).
+
+### Step 4: Lead detail + follow-ups + alerts bell
+- Lead detail: inline status/priority/assignee, quick actions, timeline, notes, follow-ups, contact
+  details.
+- Activities: call, email, meeting, SMS, other (+ outcome). Follow-up types add demo, check-in,
+  proposal; date + time; mark done and **reopen**.
+- Follow-ups page: all pending / overdue / due today / upcoming / completed.
+- **Alerts bell** in the header: overdue + due today, computed per request.
+
+### Step 5: Dashboard + Reports
+- Dashboard: stat cards, pipeline strip, follow-up queue with Done, recent activity. Money shown
+  per currency, never summed across currencies.
+- **Reports:** won value, active pipeline, average deal size (each per currency), win rate, funnel by
+  status, rep scorecard with follow-up compliance. Visibility-scoped and gated.
+
+### Step 6: Import / export
+- 6-step import wizard (upload, read, map, validate, duplicates, preview) with DB staging (audit G9),
+  import history, template download. Mapping includes deal value and a **currency column** (falls back
+  to `default_currency`; values outside the enabled list are row errors).
+- Export CSV (filtered or selected; formula-escaped; includes deal value + currency); audited.
 
 ### Carried forward
 - Step 2: audit helper, then write `auth.login`, `auth.login_failed`, `auth.logout`,
