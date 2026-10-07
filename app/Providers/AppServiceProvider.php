@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Enums\Role;
 use App\Models\User;
+use App\Support\Permissions;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
@@ -48,14 +48,14 @@ class AppServiceProvider extends ServiceProvider
         }
     }
 
+    /**
+     * One gate per `gate` entry in config('crm.permissions') (e.g. manage-users, view-reports).
+     * The same list drives the policies and the Settings permissions table.
+     */
     private function defineGates(): void
     {
-        Gate::define('manage-users', fn (User $user) => $user->isAdmin());
-        Gate::define('manage-settings', fn (User $user) => $user->isAdmin());
-        Gate::define('view-audit-log', fn (User $user) => $user->isAdmin());
-        // Managers can see the user list (e.g. for assignment and team overview) but cannot change users.
-        Gate::define('view-users', fn (User $user) => $user->hasAnyRole(Role::Admin, Role::Manager));
-        Gate::define('export-leads', fn (User $user) => $user->hasAnyRole(Role::Admin, Role::Manager));
-        Gate::define('import-leads', fn (User $user) => $user->hasAnyRole(Role::Admin, Role::Manager));
+        foreach (Permissions::gates() as $ability) {
+            Gate::define($ability, fn (User $user) => Permissions::allows($user, $ability));
+        }
     }
 }

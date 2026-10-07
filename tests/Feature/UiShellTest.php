@@ -17,7 +17,7 @@ class UiShellTest extends TestCase
 
         $this->get('/login')
             ->assertOk()
-            ->assertSee('<title>Sign in · Renamed CRM</title>', false)
+            ->assertSee('<title>Sign In · Renamed CRM</title>', false)
             ->assertSee('Renamed CRM');
 
         $this->actingAs(User::factory()->create())->get('/leads')

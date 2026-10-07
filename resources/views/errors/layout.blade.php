@@ -1,4 +1,5 @@
-{{-- Self-contained on purpose: no Vite, no database, no user data, never any exception details. --}}
+{{-- Self-contained on purpose: no Vite, no database, no user data, never any exception details.
+     Styled like the prototype's cards (slate-100 canvas, white rounded-2xl card, indigo accent). --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,22 +9,28 @@
     <title>@yield('code') · {{ config('app.name') }}</title>
     <style nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
         body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-               font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
-               background: #f8fafc; color: #0f172a; padding: 1rem; }
-        main { max-width: 28rem; text-align: center; }
-        .code { font-size: .875rem; font-weight: 600; color: #475569; letter-spacing: .05em; }
-        h1 { font-size: 1.5rem; margin: .5rem 0; }
-        p { color: #475569; line-height: 1.5; }
-        a { display: inline-block; margin-top: 1rem; color: #1d4ed8; font-weight: 500; }
-        a:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+               font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+               background: #f1f5f9; color: #0f172a; padding: 1rem; }
+        main { max-width: 28rem; width: 100%; text-align: center; background: #fff; border: 1px solid #e2e8f0;
+               border-radius: 1rem; padding: 2rem 1.5rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        .tile { display: inline-flex; width: 3rem; height: 3rem; align-items: center; justify-content: center;
+                border-radius: .75rem; background: #4f46e5; color: #fff; font-weight: 700; font-size: 1.125rem; }
+        .code { margin-top: 1rem; font-size: .625rem; font-weight: 700; color: #64748b; letter-spacing: .05em; text-transform: uppercase; }
+        h1 { font-size: 1.25rem; font-weight: 700; margin: .5rem 0; letter-spacing: -0.01em; }
+        p { color: #475569; line-height: 1.5; font-size: .75rem; margin: 0; }
+        a { display: inline-block; margin-top: 1.25rem; padding: .5rem .875rem; border-radius: .5rem; background: #4f46e5;
+            color: #fff; font-weight: 600; font-size: .75rem; text-decoration: none; }
+        a:hover { background: #4338ca; }
+        a:focus-visible { outline: 2px solid #4f46e5; outline-offset: 2px; }
     </style>
 </head>
 <body>
     <main>
+        <div class="tile" aria-hidden="true">CRM</div>
         <p class="code">Error @yield('code')</p>
         <h1>@yield('title')</h1>
         <p>@yield('message')</p>
-        <a href="{{ url('/') }}">Go to the dashboard</a>
+        <a href="{{ url('/') }}">Go to the Dashboard</a>
     </main>
 </body>
 </html>

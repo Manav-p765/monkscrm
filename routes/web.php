@@ -24,8 +24,13 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:viewAny,'.Lead::class)
         ->name('leads.index');
 
+    Route::get('/pipeline', PlaceholderController::class)
+        ->defaults('section', 'Pipeline')
+        ->middleware('can:viewAny,'.Lead::class)
+        ->name('pipeline.index');
+
     Route::get('/follow-ups', PlaceholderController::class)
-        ->defaults('section', 'Follow-ups')
+        ->defaults('section', 'Follow-Ups')
         ->name('follow-ups.index');
 
     Route::get('/imports', PlaceholderController::class)
@@ -35,10 +40,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/reports', PlaceholderController::class)
         ->defaults('section', 'Reports')
+        ->middleware('can:view-reports')
         ->name('reports.index');
 
     Route::get('/users', PlaceholderController::class)
-        ->defaults('section', 'Users')
+        ->defaults('section', 'Users & Teams')
         ->middleware('can:view-users')
         ->name('users.index');
 

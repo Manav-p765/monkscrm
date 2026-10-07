@@ -74,7 +74,7 @@ class FortifyServiceProvider extends ServiceProvider
                 return back()
                     ->withInput($request->only(Fortify::username()))
                     ->withErrors([
-                        Fortify::username() => __('Too many login attempts. Please try again in :seconds seconds.', ['seconds' => $seconds]),
+                        Fortify::username() => __('auth.throttle', ['seconds' => $seconds]),
                     ]);
             });
         });

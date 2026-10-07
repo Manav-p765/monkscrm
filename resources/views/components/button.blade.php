@@ -37,6 +37,6 @@
             @if ($type === 'submit' && $loading) data-loading-text="{{ $loading }}" @endif
             {{ $attributes->class($classes) }}>
         @if ($icon)<x-dynamic-component :component="'lucide-'.$icon" :class="$iconSize" aria-hidden="true" />@endif
-        <span>{{ $slot }}</span>
+        <span class="contents">{{ $slot }}</span>
     </button>
 @endif

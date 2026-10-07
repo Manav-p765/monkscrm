@@ -17,6 +17,26 @@ Alpine.data('sidebar', () => ({
     },
 }));
 
+// Header search: "/" focuses it (unless you are typing in a field), Escape leaves it.
+// Enter submits to the Leads list; live results come with the leads list (step 3).
+Alpine.data('globalSearch', () => ({
+    shortcut(event) {
+        if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) {
+            return;
+        }
+        const active = document.activeElement;
+        const typing = active && (active.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName));
+        if (typing) {
+            return;
+        }
+        event.preventDefault();
+        this.$refs.input.focus();
+    },
+    blur() {
+        this.$refs.input.blur();
+    },
+}));
+
 // <x-flash>: success messages fade out after a few seconds; errors stay until dismissed.
 Alpine.data('flash', () => ({
     visible: true,

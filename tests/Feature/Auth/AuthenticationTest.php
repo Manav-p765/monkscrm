@@ -13,7 +13,7 @@ class AuthenticationTest extends TestCase
 
     public function test_login_page_renders(): void
     {
-        $this->get('/login')->assertOk()->assertSee('Sign in');
+        $this->get('/login')->assertOk()->assertSee('Sign In');
     }
 
     public function test_user_can_log_in_with_correct_credentials(): void
@@ -87,7 +87,7 @@ class AuthenticationTest extends TestCase
 
         $response->assertRedirect('/login');
         $response->assertSessionHasErrors('email');
-        $this->assertStringContainsString('Too many login attempts', session('errors')->first('email'));
+        $this->assertStringContainsString('Too many sign-in attempts', session('errors')->first('email'));
         $this->assertGuest();
     }
 

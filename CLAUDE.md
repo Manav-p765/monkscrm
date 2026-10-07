@@ -157,6 +157,7 @@ pages that duplicate a component; if something is missing, extend a component (o
 | **Monks CRM** | The product name. Always rendered via `config('app.name')`. Page titles: "Leads · Monks CRM". |
 | **Lead** | A potential client (person and/or company). Never "contact", "prospect" or "record". |
 | **Status** | Where a lead is in the pipeline (New, Contacted, Won, …). |
+| **Pipeline** | The board of leads in columns by status (Kanban). Sidebar item "Pipeline". |
 | **Source** | Where a lead came from (Website, Referral, …). "Original source" never changes. |
 | **Priority** | Low, Medium, High, Urgent. |
 | **Deal value** | The expected value of a lead, in that lead's currency. Never "ARR", "revenue" or "amount" in the UI. |

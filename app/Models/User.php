@@ -69,6 +69,16 @@ class User extends Authenticatable
         return Attribute::make(set: fn (?string $value) => $value === null ? null : mb_strtolower(trim($value)));
     }
 
+    /** "Priya Patel" → "PP"; shown in avatar circles (no photos). */
+    public function initials(): string
+    {
+        $parts = preg_split('/\s+/', trim($this->name)) ?: [];
+        $first = mb_substr($parts[0] ?? '', 0, 1);
+        $last = count($parts) > 1 ? mb_substr(end($parts), 0, 1) : '';
+
+        return mb_strtoupper($first.$last) ?: '?';
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === Role::Admin;

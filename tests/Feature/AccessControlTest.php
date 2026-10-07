@@ -73,6 +73,7 @@ class AccessControlTest extends TestCase
         return [
             'users' => ['/users'],
             'imports' => ['/imports'],
+            'reports' => ['/reports'],
         ];
     }
 
@@ -112,7 +113,7 @@ class AccessControlTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        foreach (['/dashboard', '/leads', '/follow-ups', '/imports', '/reports', '/users', '/settings', '/audit-log', '/profile'] as $uri) {
+        foreach (['/dashboard', '/leads', '/pipeline', '/follow-ups', '/imports', '/reports', '/users', '/settings', '/audit-log', '/profile'] as $uri) {
             $this->actingAs($admin)->get($uri)->assertOk();
         }
     }
@@ -121,7 +122,7 @@ class AccessControlTest extends TestCase
     {
         $sales = User::factory()->sales()->create();
 
-        foreach (['/dashboard', '/leads', '/follow-ups', '/reports', '/profile'] as $uri) {
+        foreach (['/dashboard', '/leads', '/pipeline', '/follow-ups', '/profile'] as $uri) {
             $this->actingAs($sales)->get($uri)->assertOk();
         }
     }
@@ -132,10 +133,11 @@ class AccessControlTest extends TestCase
 
         $this->actingAs($sales)->get('/dashboard')
             ->assertOk()
-            ->assertSee('Welcome, Sam Sales')
+            ->assertSee('Good day, Sam')
             ->assertDontSee(route('users.index'))
             ->assertDontSee(route('settings.index'))
             ->assertDontSee(route('imports.index'))
+            ->assertDontSee(route('reports.index'))
             ->assertDontSee(route('audit-log.index'));
 
         $admin = User::factory()->admin()->create();
@@ -152,13 +154,13 @@ class AccessControlTest extends TestCase
         $manager = User::factory()->manager()->create();
         $sales = User::factory()->sales()->create();
 
-        foreach (['manage-users', 'manage-settings', 'view-audit-log'] as $ability) {
+        foreach (['manage-users', 'manage-teams', 'manage-settings', 'view-audit-log'] as $ability) {
             $this->assertTrue($admin->can($ability), $ability);
             $this->assertFalse($manager->can($ability), $ability);
             $this->assertFalse($sales->can($ability), $ability);
         }
 
-        foreach (['export-leads', 'import-leads', 'view-users'] as $ability) {
+        foreach (['export-leads', 'import-leads', 'view-users', 'view-reports'] as $ability) {
             $this->assertTrue($admin->can($ability), $ability);
             $this->assertTrue($manager->can($ability), $ability);
             $this->assertFalse($sales->can($ability), $ability);
