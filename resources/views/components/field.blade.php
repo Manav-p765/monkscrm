@@ -1,22 +1,27 @@
 {{--
-    Internal wrapper shared by <x-input>, <x-select> and <x-textarea>:
-    label above the field, "Required" marker, hint, and the error next to the field.
-    Not for direct use on pages.
+    Internal wrapper shared by <x-input>, <x-select> and <x-textarea>: prototype label above the field
+    ("First Name *"), optional aside next to the label (e.g. "Forgot password?"), hint, and the error
+    shown right under the field in plain language. Not for direct use on pages.
 --}}
-@props(['id', 'label', 'required' => false, 'hint' => null, 'error' => null])
+@props(['id', 'label', 'required' => false, 'hint' => null, 'error' => null, 'aside' => null])
 
 <div>
-    <label for="{{ $id }}" class="mb-1.5 flex items-baseline gap-2 text-sm font-medium text-slate-800">
-        {{ $label }}
-        @if ($required)
-            <span class="text-xs font-normal text-slate-500">Required</span>
+    <div class="mb-1 flex items-center justify-between gap-2">
+        <label for="{{ $id }}" class="block text-xs font-semibold text-slate-700">
+            {{ $label }}@if ($required)<span aria-hidden="true"> *</span><span class="sr-only"> (required)</span>@endif
+        </label>
+        @if ($aside)
+            {{ $aside }}
         @endif
-    </label>
+    </div>
     {{ $slot }}
     @if ($hint)
-        <p id="{{ $id }}-hint" class="mt-1.5 text-xs text-slate-500">{{ $hint }}</p>
+        <p id="{{ $id }}-hint" class="mt-1 text-2xs text-slate-500">{{ $hint }}</p>
     @endif
     @if ($error)
-        <p id="{{ $id }}-error" class="mt-1.5 text-sm text-red-700">{{ $error }}</p>
+        <p id="{{ $id }}-error" class="mt-1 flex items-start gap-1 text-2xs font-medium text-rose-700">
+            <x-lucide-alert-circle class="mt-px size-3 shrink-0" aria-hidden="true" />
+            <span>{{ $error }}</span>
+        </p>
     @endif
 </div>

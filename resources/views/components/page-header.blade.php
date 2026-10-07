@@ -1,18 +1,29 @@
 {{--
-    Title top-left; at most ONE primary action top-right; secondary actions in a single "More" menu.
-    Rendered by the app layout from its `title`, `actions` and `more` slots. Pages don't use it directly.
+    Prototype page header: bold title (optional count chip) + grey subtitle top-left; actions top-right
+    (as in the prototype, a page may show more than one button). Rendered by the app layout from its
+    `title`, `subtitle`, `count`, `actions` and `more` props/slots. Pages don't use it directly.
 --}}
-@props(['title', 'actions' => null, 'more' => null])
+@props(['title', 'subtitle' => null, 'count' => null, 'actions' => null, 'more' => null])
 
-<div class="mb-8 flex flex-wrap items-center justify-between gap-4">
-    <h1 class="text-2xl font-semibold text-slate-900">{{ $title }}</h1>
+<div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div>
+        <h1 class="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900">
+            <span>{{ $title }}</span>
+            @if ($count !== null && $count !== '')
+                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{{ $count }}</span>
+            @endif
+        </h1>
+        @if ($subtitle)
+            <p class="mt-1 text-xs text-slate-500">{{ $subtitle }}</p>
+        @endif
+    </div>
 
     @if ($actions?->isNotEmpty() || $more?->isNotEmpty())
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+            {{ $actions }}
             @if ($more?->isNotEmpty())
                 <x-more-menu>{{ $more }}</x-more-menu>
             @endif
-            {{ $actions }}
         </div>
     @endif
 </div>

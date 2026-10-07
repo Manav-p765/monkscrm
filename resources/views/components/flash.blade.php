@@ -1,7 +1,7 @@
 {{--
-    Short message at the top of the page after an action.
+    Prototype banner (Kanban "Moved X to stage Y", sign-in error box). Rendered by the layouts.
     Controllers: ->with('status', 'Lead saved') for success (fades out after a few seconds),
-                 ->with('error', 'Could not ... Try ...') for problems (stays until dismissed).
+                 ->with('error', 'Could not … Try …') for problems (stays until dismissed).
     Fortify's status keys (e.g. "password-updated") are translated via lang/en.json.
 --}}
 @php
@@ -16,13 +16,21 @@
          data-auto-dismiss="{{ $type === 'success' ? 'true' : 'false' }}"
          role="{{ $type === 'error' ? 'alert' : 'status' }}"
          @class([
-             'mb-6 flex items-start justify-between gap-4 rounded-md px-4 py-3 text-sm',
-             'bg-green-50 text-green-900' => $type === 'success',
-             'bg-red-50 text-red-900' => $type === 'error',
+             'flex items-center justify-between gap-3 rounded-xl border p-2.5 px-4 text-xs font-semibold shadow-xs',
+             'border-emerald-200 bg-emerald-50 text-emerald-800' => $type === 'success',
+             'border-rose-200 bg-rose-50 text-rose-700' => $type === 'error',
          ])>
-        <p>{{ $message }}</p>
-        <button type="button" x-on:click="dismiss" class="shrink-0 rounded-sm font-medium underline-offset-2 hover:underline">
-            Dismiss
+        <span class="flex items-center gap-2">
+            @if ($type === 'success')
+                <x-lucide-check-circle-2 class="size-4 shrink-0 text-emerald-600" aria-hidden="true" />
+            @else
+                <x-lucide-alert-triangle class="size-4 shrink-0 text-rose-600" aria-hidden="true" />
+            @endif
+            <span>{{ $message }}</span>
+        </span>
+        <button type="button" x-on:click="dismiss" class="shrink-0 rounded p-0.5 opacity-70 hover:opacity-100">
+            <span class="sr-only">Dismiss</span>
+            <x-lucide-x class="size-3.5" aria-hidden="true" />
         </button>
     </div>
 @endforeach

@@ -40,14 +40,101 @@ Alpine.data('confirmDialog', () => ({
     },
 }));
 
-// <x-more-menu>: the single "More" menu for secondary actions.
-Alpine.data('moreMenu', () => ({
+// <x-dropdown> (and <x-more-menu>, which uses it).
+Alpine.data('dropdown', () => ({
     open: false,
     toggle() {
         this.open = !this.open;
     },
     close() {
         this.open = false;
+    },
+}));
+
+// <x-modal>: native <dialog>. Opened by a `modalTrigger` button (data-modal="name") or on load
+// when the server marks it open (e.g. after a validation error inside it).
+Alpine.data('modal', () => ({
+    init() {
+        if (this.$el.dataset.open === 'true') {
+            this.$nextTick(() => this.$refs.dialog.showModal());
+        }
+    },
+    handleOpen(event) {
+        if (event.detail === this.$el.dataset.name) {
+            this.$refs.dialog.showModal();
+        }
+    },
+    close() {
+        this.$refs.dialog.close();
+    },
+}));
+
+Alpine.data('modalTrigger', () => ({
+    open() {
+        this.$dispatch('open-modal', this.$el.dataset.modal);
+    },
+}));
+
+// <x-slide-over>: opens on load (it has its own URL); closing navigates to data-close-href.
+Alpine.data('slideOver', () => ({
+    init() {
+        this.$nextTick(() => this.$refs.dialog.showModal());
+    },
+    close() {
+        window.location.assign(this.$el.dataset.closeHref);
+    },
+    cancel(event) {
+        event.preventDefault();
+        this.close();
+    },
+    backdropClick(event) {
+        // A click on the <dialog> element itself (not its content) is a click on the backdrop.
+        if (event.target === this.$refs.dialog) {
+            this.close();
+        }
+    },
+}));
+
+// <x-tabs> with in-page panels. tabButton/tabPanel are nested scopes reading the parent's `active`.
+Alpine.data('tabs', () => ({
+    active: '',
+    init() {
+        this.active = this.$el.dataset.active;
+    },
+}));
+
+Alpine.data('tabButton', () => ({
+    select() {
+        this.active = this.$el.dataset.tab;
+    },
+    get selected() {
+        return this.active === this.$el.dataset.tab;
+    },
+    get stateClasses() {
+        return { [this.$el.dataset.on]: this.selected, [this.$el.dataset.off]: !this.selected };
+    },
+}));
+
+Alpine.data('tabPanel', () => ({
+    get visible() {
+        return this.active === this.$el.dataset.tab;
+    },
+}));
+
+// <x-input reveal>: show/hide password.
+Alpine.data('passwordReveal', () => ({
+    shown: false,
+    toggle() {
+        this.shown = !this.shown;
+    },
+    get hidden() {
+        return !this.shown;
+    },
+    get inputType() {
+        return this.shown ? 'text' : 'password';
+    },
+    get label() {
+        return this.shown ? 'Hide password' : 'Show password';
     },
 }));
 

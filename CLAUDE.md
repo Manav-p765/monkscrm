@@ -86,70 +86,69 @@ over-engineer and do not add packages unless clearly needed.
 
 ## UI rules
 
-Users are sales and operations staff, not technical users. Someone with zero training should
-understand every screen within a few seconds. **When in doubt, remove rather than add.**
+**The prototype is the source of truth for the look and behaviour.** It lives in `design/` (clone the
+design repo there; gitignored) with screenshots in `docs/design-screens/` and an inventory in
+`docs/DESIGN_AUDIT.md`. Match it exactly: colours, font, sizes, spacing, radius, shadows, layout,
+labels and their case, how many buttons a screen has, tabs, modals, slide-overs and interactions.
+When building a screen, open its TSX in `design/src/components/...` and port the Tailwind class strings.
+The prototype's data, auth and permission logic is fake: never copy it (audit §7).
+
+### Design tokens
+- Defined in the `@theme` block of `resources/css/app.css` (from audit §2): Tailwind's default palette,
+  accent indigo-600 (hover indigo-700), slate neutrals, white cards on a slate-50 canvas, rounded-lg /
+  xl / 2xl, `shadow-2xs` cards, 12px (`text-xs`) base UI text, `text-2xs` (11px), `text-3xs` (10px) and
+  `text-4xs` (9px) meta text, sidebar `w-60`, header `h-16`.
+- Font: Plus Jakarta Sans 400/500/600/700, self-hosted via `@fontsource` (no CDN).
+- Icons: Lucide (same set as the prototype), rendered server-side as inline SVG:
+  `<x-lucide-phone class="size-3.5" aria-hidden="true" />`. Names match the prototype's lucide-react imports.
+- Status and tag colours: only the prototype palette in `config/crm.php` (`palette`); `<x-badge>` maps the
+  stored hex back to the prototype's classes.
+
+### Rules we keep on top of the prototype (they protect users or security)
+- **Contrast (WCAG AA, including small text):** text is never lighter than `slate-500`. The prototype's
+  `text-slate-400` text becomes `text-slate-500`; `slate-400` is for icons, borders and placeholders of
+  disabled controls only.
+- **Visible keyboard focus** on everything interactive (global `:focus-visible` outline), a `<label>`
+  for every input (visually hidden where the prototype shows none).
+- **Errors in plain language**, shown under the field (customise Form Request `messages()` /
+  `attributes()`), styled like the prototype. Never show technical errors, codes or stack traces.
+- **Destructive actions** (archive, delete tag, deactivate user) always use `<x-confirm-dialog>`, whose
+  title names the item. The prototype has none; ours look like its modals.
+- **Submit buttons** show loading text and are disabled while submitting (built into `<x-button>`).
+- **Empty, loading and error states** on every list and screen, designed in the prototype's style
+  (`<x-empty-state>`, `<x-flash>`), since the prototype mostly lacks them.
+- **Feedback** after every action ("Lead saved", "3 leads assigned to Priya") via `<x-flash>`.
+- **Glossary** below: use exactly those words (the prototype says "Rep", "Assignee" and "ARR"; we say
+  "Assigned to" and "Deal value").
+- **Never format dates or money directly:** use `<x-money>` / `App\Support\Money` and the date helper.
+- Lists paginate at 25 rows. Under our CSP, all Alpine logic goes in `resources/js/app.js`
+  (`Alpine.data`); no inline scripts or `style=""`.
+- Laptop and tablet widths must work well; phones usable.
 
 ### Components: use only these
-All UI is built from the components in `resources/views/components`. Do not create one-off
-styles on individual pages; if something is missing, extend a component (or add one and list it here).
+All UI is built from the components in `resources/views/components`. Do not create one-off styles on
+pages that duplicate a component; if something is missing, extend a component (or add one and list it here).
 
-| Component | Use |
+| Component | Use (prototype counterpart) |
 |---|---|
-| `<x-layouts.app title="…" [wide]>` | Page shell. Renders the page header from `title` plus the `actions` / `more` slots, and the flash message. Use `wide` for full-width tables. |
-| `<x-page-header>` | Title top-left, max one primary action top-right, "More" menu. Rendered by the layout. |
-| `<x-button>` | `variant`: primary / secondary / danger / text. `href` renders a link. `loading="Saving…"` text while submitting. |
-| `<x-input>`, `<x-select>`, `<x-textarea>` | Label above, `required` marker, `hint`, error shown next to the field. `bag` for named error bags. |
-| `<x-more-details>` | The single "More details" section for less-used form fields. Pass `:open` when one of its fields has an error. |
-| `<x-badge>` | `color="#hex"` for status colors from the database; `tone` (neutral/red/amber/green/blue) for fixed meanings, e.g. `:tone="$lead->priority->tone()"`. |
-| `<x-table :paginator>` | Lists. `<x-slot:head>` for the header row; `<tr data-href="…">` makes a row clickable (also put a real link in the first cell). |
-| `<x-empty-state title="…">` | Every list: says what to do next, with the relevant button in `actions`. |
-| `<x-flash>` | Rendered by layouts. Controllers use `->with('status', 'Lead saved')` (fades out) or `->with('error', '…')` (stays). |
-| `<x-confirm-dialog>` | Required for every destructive action. The title names the item. |
-| `<x-more-menu>` | Secondary actions in the page header (via the layout's `more` slot). |
-| `<x-money>` | Every money amount: `:amount` (minor units) + `:currency`, or `:totals` (per-currency totals, "$12,400 · ₹3,50,000"). |
-
-### Layout
-- One sidebar + one main content area. No nested menus, no tabs inside tabs, no dropdown navigation.
-- Every page: a clear title top-left and **at most one primary button** top-right (e.g. "Add lead").
-  Secondary actions are text buttons or go in the single "More" menu.
-- Content is left-aligned with a comfortable reading width (`max-w-4xl`); tables may use full width (`wide`).
-- Use spacing and type hierarchy, not boxes, borders and cards everywhere.
-
-### Visual style
-- Light theme only. White / very light grey backgrounds; one accent color (blue-700) for primary
-  buttons, links and the active nav item; neutral greys for everything else.
-- Color is for meaning only: status badges (status color from the database), priority (only High =
-  amber and Urgent = red; Low/Medium grey), overdue follow-ups red, success green. No decorative
-  colors, gradients or shadows.
-- One font: the system UI stack. Base size 15px (`text-sm`), 16px for emphasis (`text-base`).
-  Sentence case everywhere; no all-caps labels.
-- Icons only where they speed up recognition (phone, email, calendar), always with a text label in buttons.
-
-### Forms
-- Labels above fields, in plain language ("Phone number", never "phone_normalized").
-- Show only the most-used fields; put the rest in `<x-more-details>`.
-- Mark required fields. Errors appear next to the field in plain language saying how to fix it
-  (customise Form Request `messages()` / `attributes()` where Laravel's default wording is technical).
-- Buttons say exactly what they do: "Save lead", "Schedule follow-up", "Import 240 leads".
-  Never "Submit" or "OK".
-- Destructive actions (archive, delete, deactivate user) always use `<x-confirm-dialog>` naming the item.
-- Submit buttons show a loading text and are disabled while submitting (built into `<x-button>`).
-
-### Tables and lists
-- Only the columns people need to scan. Clicking a row opens the item.
-- Search box always visible at the top of every list. Filters sit in one simple row/panel with a
-  single "Clear filters" link.
-- Every list has an `<x-empty-state>` ("No leads yet. Add your first lead or import a CSV.") with the button.
-- Paginate at **25** rows per page.
-
-### Feedback
-- After every action, a short success message: "Lead saved", "3 leads assigned to Priya".
-- Errors say what went wrong and how to fix it. Never show technical errors, codes or stack traces.
-
-### Accessibility and devices
-- Visible keyboard focus on everything interactive, a `<label>` for every input, WCAG AA contrast.
-- Must work well at laptop and tablet widths. Phones: usable, not optimised.
-- Under our CSP, Alpine logic goes in `resources/js/app.js` (`Alpine.data`). No inline scripts or `style=""`.
+| `<x-layouts.app title="…" [subtitle] [count] [width]>` | Page shell: sidebar, header (search, alerts bell, user menu), flash, page header from `title`/`subtitle`/`count` + `actions`/`more` slots. `width`: `5xl` / `6xl` / `7xl` (default). |
+| `<x-layouts.guest>` | Sign-in screens (AuthView card). |
+| `<x-page-header>` | Bold title + count chip + subtitle; actions top-right. Rendered by the layout. |
+| `<x-button>` | `variant`: primary / secondary / danger / danger-soft / success / ghost / text / dark; `size`: sm / md / lg; `icon="plus"`; `href` renders a link; `loading="Saving…"`. |
+| `<x-input>`, `<x-select>`, `<x-textarea>` | Label above ("First Name *"), `hint`, error under the field, `bag`; `size="lg"` + `icon` + `reveal` for sign-in screens; `<x-slot:aside>` next to the label. |
+| `<x-more-details>` | Collapsible section for less-used form fields. Pass `:open` when one of its fields has an error. |
+| `<x-badge>` | `color="#hex"` status/tag badge with dot; `tone` (neutral/red/amber/green/blue/indigo) bold chip, e.g. Overdue. |
+| `<x-table :paginator>` | Table card with footer ("Showing 1–25 of 240") and page links. `<tr data-href>` rows are clickable (also put a real link in the first cell). |
+| `<x-empty-state title icon [tone=success]>` | Every list's empty state, with the next action in `actions`. |
+| `<x-flash>` | Success (fades) / error (stays) banner. Controllers: `->with('status', …)` / `->with('error', …)`. |
+| `<x-confirm-dialog>` | Every destructive action; title names the item. |
+| `<x-modal name title [subtitle] [size] [:open]>` | Prototype modals. Open with `x-data="modalTrigger" data-modal="name" x-on:click="open"`. `footer` slot. |
+| `<x-slide-over :close-href label>` | Right-hand panel with its own URL (lead detail). `header` slot. |
+| `<x-tabs :tabs [active] variant>` + `<x-tab-panel name>` | `underline` (lead detail), `pills` (settings, quick filters), `segmented` (Table/Pipeline). Items with `href` are link tabs. |
+| `<x-dropdown>` | Menus (bulk actions, user menu). `trigger` slot; `align`, `width`, `up`. |
+| `<x-more-menu>` | Secondary actions in the page header (layout's `more` slot). |
+| `<x-stat label [tone] [hint] [href]>` | Stat card (dashboard, reports, import validation). |
+| `<x-money>` | Every money amount: `:amount` (minor units) + `:currency`, or `:totals` ("$12,400 · ₹3,50,000"). |
 
 ## Glossary: use exactly these words everywhere
 

@@ -82,7 +82,7 @@ class UiShellTest extends TestCase
 
         $this->assertStringContainsString('<label for="phone"', $html);
         $this->assertStringContainsString('Phone number', $html);
-        $this->assertStringContainsString('Required', $html);
+        $this->assertStringContainsString('<span aria-hidden="true"> *</span><span class="sr-only"> (required)</span>', $html);
         $this->assertStringContainsString('aria-invalid="true"', $html);
         $this->assertStringContainsString('aria-describedby="phone-error"', $html);
         $this->assertStringContainsString('Enter a phone number, e.g. +91 98765 43210.', $html);

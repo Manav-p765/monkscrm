@@ -1,7 +1,8 @@
 {{--
-    <x-select name="lead_status_id" label="Status" :options="[id => name, ...]" placeholder="Choose a status" required />
+    <x-select name="lead_status_id" label="Lead Status" :options="[id => name, ...]" placeholder="Unassigned" required />
 --}}
-@props(['name', 'label', 'options' => [], 'value' => null, 'placeholder' => null, 'required' => false, 'hint' => null, 'bag' => 'default', 'id' => null])
+@props(['name', 'label', 'options' => [], 'value' => null, 'placeholder' => null, 'required' => false, 'hint' => null,
+    'bag' => 'default', 'id' => null, 'size' => 'md', 'aside' => null])
 
 @php
     $key = str_replace(['[]', '[', ']'], ['', '.', ''], $name);
@@ -11,16 +12,12 @@
     $current = (string) old($key, $value instanceof \BackedEnum ? $value->value : $value);
 @endphp
 
-<x-field :id="$id" :label="$label" :required="$required" :hint="$hint" :error="$error">
+<x-field :id="$id" :label="$label" :required="$required" :hint="$hint" :error="$error" :aside="$aside">
     <select id="{{ $id }}" name="{{ $name }}"
             @if ($required) required @endif
             @if ($error) aria-invalid="true" @endif
             @if ($describedBy) aria-describedby="{{ $describedBy }}" @endif
-            {{ $attributes->class([
-                'block w-full rounded-md border bg-white px-3 py-2 text-sm text-slate-900 focus:ring-1 focus:outline-none',
-                'border-slate-300 focus:border-blue-600 focus:ring-blue-600' => ! $error,
-                'border-red-600 focus:border-red-600 focus:ring-red-600' => $error,
-            ]) }}>
+            {{ $attributes->class(\App\View\FormStyles::control($size, (bool) $error)) }}>
         @if ($placeholder !== null)
             <option value="">{{ $placeholder }}</option>
         @endif
