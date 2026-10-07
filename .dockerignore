@@ -21,6 +21,7 @@ phpunit*.xml
 .idea
 .claude
 docs
+design
 database/*.sqlite*
 
 # Runtime state (keep the directory skeletons via their .gitignore files)

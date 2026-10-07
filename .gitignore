@@ -30,3 +30,10 @@ Thumbs.db
 .env.*.local
 .env.testing.pgsql
 /database/*.sqlite
+
+# design/ is a reference prototype (own nested git repo). Never commit its secrets or build output.
+/design/.env
+/design/.env.*
+!/design/.env.example
+/design/node_modules
+/design/dist
