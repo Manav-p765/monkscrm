@@ -29,17 +29,40 @@ class Import extends Model
         'duplicate_strategy',
         'column_mapping',
         'error_report',
+        'processed_rows',
+        'options',
+        'error_rows',
+        'completed_at',
+        'undone_at',
     ];
 
     /** Statuses after which the staged rows are no longer needed. */
     public const FINISHED_STATUSES = ['completed', 'cancelled'];
+
+    /** "Undo import" is possible for this long after it completes. */
+    public const UNDO_HOURS = 24;
 
     protected function casts(): array
     {
         return [
             'column_mapping' => 'array',
             'error_report' => 'array',
+            'options' => 'array',
+            'error_rows' => 'encrypted:array',
+            'completed_at' => 'datetime',
+            'undone_at' => 'datetime',
         ];
+    }
+
+    public function canBeUndone(): bool
+    {
+        return $this->status === 'completed' && $this->undone_at === null && $this->completed_at
+            && $this->completed_at->gt(now()->subHours(self::UNDO_HOURS)) && $this->imported_rows > 0;
+    }
+
+    public function leads(): HasMany
+    {
+        return $this->hasMany(Lead::class);
     }
 
     protected static function booted(): void

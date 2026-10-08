@@ -26,7 +26,7 @@ _(written at the end of the night)_
 | 3 | Done | Leads core, panel, bulk, Kanban, perf. SQLite 144 + 1 skipped, Postgres 145/145. |
 | 4 | Done | Notes, activities, follow-ups, timeline, follow-ups page, alerts bell. SQLite 152 + 1 skipped, Postgres 153/153. |
 | 5 | Done | Dashboard + Reports + report CSV. SQLite 156 + 1 skipped, Postgres 157/157. |
-| 6 | Not started | |
+| 6 | Done | Import wizard, undo, history, lead export. SQLite 167 + 1 skipped, Postgres 168/168. |
 
 ## Step 2 report
 
@@ -118,6 +118,33 @@ milestone; follow-up completion = completed ÷ (follow-ups that came due, exclud
 count leads created in the range; small query-string/PATCH inputs (report dates, follow-up page filter,
 panel status/assignee/priority) are validated inline with `$request->validate()` rather than separate
 Form Request classes.
+
+## Step 6 report
+
+**Built:** 6-step import wizard (Upload → Read → Map → Validate → Duplicates → Preview & Import) with
+`App\Services\Imports\LeadImporter`: .csv/.xlsx only (extension + detected type; .xlsm/.xls/.xlsb and
+workbooks with a VBA project refused), size/row limits from Settings, parsing with OpenSpout, upload
+deleted right after parsing, rows staged encrypted in `import_rows`; auto-guessed mapping incl.
+currency; unknown status/source/tag/user → use default, create (admin only; users never created) or
+skip the row; validation (required fields, email, phone, priority, website, deal value, enabled
+currency with fallback to the default); duplicates within the file and against the database
+(normalized email/phone); strategies skip (default) / update (only leads the importer can see; empty
+cells never wipe data) / import as new; chunked import (500 rows per request, page loops, resumable,
+one transaction per chunk, statuses via LeadStatusChanger, assignment via LeadAssigner); summary +
+error-rows CSV (original values kept encrypted on the import); Undo within 24 hours (importer or admin;
+archives untouched created leads, lists edited ones, never reverts updates, warned on the strategy
+step); import history with Undo; lead export (current filters, visibility-scoped, selectable columns,
+streamed, max 20,000, 10/hour, formula-safe, audited with filters + row count).
+
+**Packages:** `openspout/openspout` ^5.12 (maintained streaming CSV/XLSX reader/writer, no macros, no
+external calls).
+
+**Migration:** `imports` processed_rows / options / error_rows (encrypted) / completed_at / undone_at;
+`leads.import_id`.
+
+**Decisions:** the importer must be admin or manager (gate `import-leads`), so "update / import as new
+are admin/manager only" always holds; each import is visible only to its importer and admins;
+"edited since import" = lead updated after the import finished; the first sheet of an .xlsx is read.
 
 ## Decisions made overnight
 

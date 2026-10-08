@@ -410,6 +410,81 @@ Alpine.data('bulkSelect', () => ({
     },
 }));
 
+// Import upload: drag a file onto the drop zone (or pick one) and show its name.
+Alpine.data('fileDrop', () => ({
+    fileName: '',
+    dragging: false,
+    over() {
+        this.dragging = true;
+    },
+    leave() {
+        this.dragging = false;
+    },
+    drop(event) {
+        this.dragging = false;
+        if (event.dataTransfer.files.length) {
+            this.$refs.file.files = event.dataTransfer.files;
+            this.picked();
+        }
+    },
+    picked() {
+        const file = this.$refs.file.files[0];
+        this.fileName = file ? file.name : '';
+    },
+    get dragClasses() {
+        return { 'border-indigo-500': this.dragging, 'bg-indigo-50/40': this.dragging };
+    },
+}));
+
+// Import step 6: no background worker, so the page asks the server for one chunk (500 rows) at a
+// time until it answers "done". Reloading the page resumes; the server keeps the progress.
+Alpine.data('importRunner', () => ({
+    running: false,
+    failed: false,
+    done: 0,
+    total: 0,
+    init() {
+        if (this.$el.dataset.autostart === 'true') {
+            this.start();
+        }
+    },
+    async start() {
+        this.running = true;
+        this.failed = false;
+        const token = document.querySelector('meta[name="csrf-token"]').content;
+        for (;;) {
+            try {
+                const response = await fetch(this.$el.dataset.url, {
+                    method: 'POST',
+                    headers: { Accept: 'text/plain', 'X-Requested-With': 'fetch', 'X-CSRF-TOKEN': token },
+                    credentials: 'same-origin',
+                });
+                if (!response.ok) {
+                    throw new Error(String(response.status));
+                }
+                const text = (await response.text()).trim();
+                if (text === 'done') {
+                    window.location.assign(this.$el.dataset.doneUrl);
+                    return;
+                }
+                const [done, total] = text.split('/').map((n) => parseInt(n, 10));
+                this.done = done;
+                this.total = total;
+            } catch {
+                this.running = false;
+                this.failed = true;
+                return;
+            }
+        }
+    },
+    get percent() {
+        return this.total ? Math.max(2, Math.round((100 * this.done) / this.total)) : 2;
+    },
+    get progressText() {
+        return this.total ? 'Importing ' + this.done.toLocaleString() + ' of ' + this.total.toLocaleString() + '…' : 'Importing…';
+    },
+}));
+
 // <x-input reveal>: show/hide password.
 Alpine.data('passwordReveal', () => ({
     shown: false,

@@ -17,6 +17,11 @@
             'table' => ['label' => 'Table', 'icon' => 'layout-list', 'href' => route('leads.index', collect($query)->except(['page'])->all()), 'active' => true],
             'pipeline' => ['label' => 'Pipeline', 'icon' => 'kanban', 'href' => route('pipeline.index', collect($query)->except(['page', 'sort', 'dir', 'archived'])->all()), 'active' => false],
         ]" />
+        @can('export', App\Models\Lead::class)
+            @unless ($archived)
+                <x-button type="button" variant="secondary" icon="download" x-data="modalTrigger" data-modal="export-leads" x-on:click="open">Export CSV</x-button>
+            @endunless
+        @endcan
         @can('create', App\Models\Lead::class)
             <x-button :href="route('leads.create', $query)" icon="plus" class="active:scale-95">Add Lead</x-button>
         @endcan
@@ -32,6 +37,30 @@
     @endcan
 
     @include('leads._filters', ['route' => 'leads.index'])
+
+    @can('export', App\Models\Lead::class)
+        <x-modal name="export-leads" title="Export Leads to CSV" :subtitle="number_format($leads->total()).' leads match your current filters (up to '.number_format(\App\Http\Controllers\LeadExportController::MAX_ROWS).' are exported)'" size="lg">
+            <form id="export-form" method="GET" action="{{ route('leads.export') }}" class="space-y-3">
+                @foreach (collect($filters)->filter(fn ($v) => $v !== null && $v !== '') as $key => $value)
+                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @endforeach
+                <fieldset>
+                    <legend class="mb-2 text-xs font-semibold text-slate-700">Columns to include</legend>
+                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        @foreach (\App\Http\Controllers\LeadExportController::COLUMNS as $key => $label)
+                            <x-checkbox name="columns[]" :value="$key" :label="$label" :id="'export-col-'.$key"
+                                        :checked="in_array($key, \App\Http\Controllers\LeadExportController::DEFAULT_COLUMNS, true)" />
+                        @endforeach
+                    </div>
+                </fieldset>
+                <p class="text-2xs text-slate-500">Exports are recorded in the audit log. You can export up to 10 times an hour.</p>
+            </form>
+            <x-slot:footer>
+                <x-button type="button" variant="ghost" x-on:click="close">Cancel</x-button>
+                <x-button form="export-form" icon="download" :loading="false" x-on:click="close">Download CSV</x-button>
+            </x-slot:footer>
+        </x-modal>
+    @endcan
 
     <div x-data="bulkSelect" class="space-y-4">
         <form id="bulk-form" method="POST" action="{{ route('leads.bulk') }}" class="hidden">@csrf</form>

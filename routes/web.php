@@ -4,7 +4,9 @@ use App\Http\Controllers\AcceptInviteController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FollowUpController;
+use App\Http\Controllers\ImportController;
 use App\Http\Controllers\LeadBulkController;
+use App\Http\Controllers\LeadExportController;
 use App\Http\Controllers\LeadWorkController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadDuplicateCheckController;
@@ -73,10 +75,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/follow-ups', [FollowUpController::class, 'index'])->name('follow-ups.index');
     Route::post('/alerts/seen', [FollowUpController::class, 'markAlertsSeen'])->name('alerts.seen');
 
-    Route::get('/imports', PlaceholderController::class)
-        ->defaults('section', 'Imports')
-        ->middleware('can:import-leads')
-        ->name('imports.index');
+    // Imports (admins and managers). Each import is only visible to its importer and admins.
+    Route::middleware('can:import-leads')->group(function () {
+        Route::get('/imports', [ImportController::class, 'index'])->name('imports.index');
+        Route::get('/imports/template.csv', [ImportController::class, 'template'])->name('imports.template');
+        Route::post('/imports', [ImportController::class, 'store'])->middleware('throttle:20,60')->name('imports.store');
+        Route::get('/imports/{import}', [ImportController::class, 'show'])->name('imports.show');
+        Route::post('/imports/{import}/mapping', [ImportController::class, 'mapping'])->name('imports.mapping');
+        Route::post('/imports/{import}/strategy', [ImportController::class, 'strategy'])->name('imports.strategy');
+        Route::post('/imports/{import}/run', [ImportController::class, 'run'])->name('imports.run');
+        Route::post('/imports/{import}/cancel', [ImportController::class, 'cancel'])->name('imports.cancel');
+        Route::post('/imports/{import}/undo', [ImportController::class, 'undo'])->name('imports.undo');
+        Route::get('/imports/{import}/errors.csv', [ImportController::class, 'errors'])->name('imports.errors');
+    });
+
+    // Export the filtered lead list (admins and managers; 10 per hour per user).
+    Route::get('/leads-export', LeadExportController::class)->middleware(['can:export-leads', 'throttle:10,60'])->name('leads.export');
 
     Route::middleware('can:view-reports')->group(function () {
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
