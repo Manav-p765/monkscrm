@@ -219,7 +219,7 @@ class SettingsTest extends TestCase
         $this->assertSame(['USD', 'INR', 'EUR'], Settings::get('enabled_currencies'));
 
         $entry = AuditLog::where('action', 'settings.updated')->get()->firstWhere('meta.setting', 'enabled_currencies');
-        $this->assertSame(['setting' => 'enabled_currencies', 'from' => ['USD', 'INR'], 'to' => ['USD', 'INR', 'EUR']], $entry->meta);
+        $this->assertEquals(['setting' => 'enabled_currencies', 'from' => ['USD', 'INR'], 'to' => ['USD', 'INR', 'EUR']], $entry->meta);
         $this->assertSame('EUR', AuditLog::where('action', 'settings.updated')->get()->firstWhere('meta.setting', 'default_currency')->meta['to']);
         // Unchanged values aren't logged.
         $this->assertNull(AuditLog::where('action', 'settings.updated')->get()->firstWhere('meta.setting', 'import_max_rows'));

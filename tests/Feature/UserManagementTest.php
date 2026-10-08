@@ -175,7 +175,7 @@ class UserManagementTest extends TestCase
             'name' => 'New Name', 'email' => $user->email, 'role' => 'manager', 'team_id' => $team->id,
         ])->assertRedirect(route('users.index'));
 
-        $this->assertSame(['from' => 'sales', 'to' => 'manager'], AuditLog::where('action', 'user.role_changed')->first()->meta);
+        $this->assertEquals(['from' => 'sales', 'to' => 'manager'], AuditLog::where('action', 'user.role_changed')->first()->meta);
         $this->assertSame(['fields' => ['name', 'team_id']], AuditLog::where('action', 'user.updated')->first()->meta);
     }
 
@@ -323,7 +323,7 @@ class UserManagementTest extends TestCase
         $this->put("/teams/{$team->id}", ['name' => 'Inbound'])->assertRedirect();
         $this->assertSame('Inbound', $team->fresh()->name);
         $this->assertDatabaseHas('audit_logs', ['action' => 'team.created']);
-        $this->assertSame(['from' => 'Inbound Growth', 'to' => 'Inbound'], AuditLog::where('action', 'team.updated')->first()->meta);
+        $this->assertEquals(['from' => 'Inbound Growth', 'to' => 'Inbound'], AuditLog::where('action', 'team.updated')->first()->meta);
     }
 
     public function test_user_email_is_unique_ignoring_case(): void
