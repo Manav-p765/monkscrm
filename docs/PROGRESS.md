@@ -6,11 +6,11 @@
 | 1c | PostgreSQL + Docker readiness | ✅ Done |
 | 1d | Design audit + currency groundwork | ✅ Done |
 | 2 | Design system / shell / users / teams / settings / audit log | ✅ Done |
-| 3 | Leads CRUD / list / search / filters / duplicates / bulk actions / Kanban | ⬜ Not started |
-| 4 | Lead detail / notes / activities / follow-ups / timeline / alerts bell | ⬜ Not started |
-| 5 | Dashboard / Reports | ⬜ Not started |
-| 6 | Import / export | ⬜ Not started |
-| 7 | Hardening / 2FA enforcement / deploy | ⬜ Not started |
+| 3 | Leads CRUD / list / search / filters / duplicates / bulk actions / Kanban | ✅ Done (docs/OVERNIGHT_LOG.md) |
+| 4 | Lead detail / notes / activities / follow-ups / timeline / alerts bell | ✅ Done (docs/OVERNIGHT_LOG.md) |
+| 5 | Dashboard / Reports | ✅ Done (docs/OVERNIGHT_LOG.md) |
+| 6 | Import / export | ✅ Done (docs/OVERNIGHT_LOG.md) |
+| 7 | Hardening / 2FA enforcement / deploy | 🟡 Code done; live deploy + verification pending |
 
 ## Step 1: Foundation (done)
 
@@ -131,3 +131,24 @@ Steps 3–6 follow `docs/OVERNIGHT_PLAN.md`; progress in `docs/OVERNIGHT_LOG.md`
 - Step 3: replace `LeadPolicy` stubs, add the lead visibility scope; My Profile name/phone/job title.
 - Step 7: run `php artisan icons:cache` at container start (blade-icons) for faster rendering.
 - Step 7: enforce 2FA for admins; production deploy checklist (TRUSTED_PROXIES, SMTP, queue, backups).
+
+## Step 7: Production deploy (code done 2026-10-09; live verification pending)
+
+- **Secrets:** working tree and full history scanned (no real secrets found; the leaked Resend key was never
+  committed). `.env.example` holds placeholders only. `scripts/git-hooks/pre-commit` blocks env files, Resend
+  keys, `base64:` APP_KEYs, Neon passwords, age private keys and Postgres URLs with passwords
+  (`git config core.hooksPath scripts/git-hooks`).
+- **Config:** `docs/DEPLOY.md` (every Render env var, APP_KEY, DNS at Vercel, Resend domain, first-deploy
+  order). `ProductionGuard`: production refuses to boot without APP_KEY/APP_URL/DB_URL, with debug on, or
+  with a non-https APP_URL.
+- **Migrations without a shell:** `scripts/migrate-production.ps1` (hidden prompts, process-only env,
+  status + typed yes, backup first via pg_dump|age or a guided Neon branch, migrate, base seeder, first-run
+  admin, cleanup). `scripts/production-artisan.ps1` for `crm:mail-test`, `crm:create-admin`,
+  `migrate:status`. Demo/performance seeders only run with APP_ENV=local.
+- **Hardening:** `/healthz` (no session/cookies/DB; Render health check), `icons:cache` at start, admins must
+  use two-step sign-in (`RequireTwoFactorForAdmins`), `crm:mail-test {email}` (active admins only, audited).
+- **Backups:** `.github/workflows/backup.yml` (nightly 02:00 IST, pg_dump 18 → age → R2, 30 daily + 12
+  monthly) and `restore-test.yml` (monthly restore into a throwaway Postgres, table checks, counts only).
+- **Operations:** `RUNBOOK.md` (deploy, migrations, backups/restore, rollback, email check, admins,
+  offboarding, secret rotation, leaked secrets, monitoring, monthly checks).
+- Pending: Render/Neon/R2/Resend/DNS setup by hand (DEPLOY.md), then live verification (step 7.7).

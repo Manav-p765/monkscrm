@@ -121,3 +121,126 @@ branch automatically → Restore. The connection strings don't change; the app r
 5. **Resume:** Render → **Resume service**. Sign in and check recent leads.
 6. Tell the team which backup was restored and what was lost (changes after that backup's time). Delete the
    `before-restore-*` branch after a week if all is well.
+
+## Monitoring
+
+**Uptime (UptimeRobot, free):**
+1. uptimerobot.com → sign up with a shared admin mailbox → **New monitor**.
+2. Type **Keyword**, URL `https://crm.hybridmonks.com/healthz`, keyword `ok` (alert when *not* present),
+   interval **5 minutes**. Friendly name "Monks CRM".
+3. Alert contacts: the admins' email addresses (add a second person). Save.
+4. `/healthz` never touches the database, so monitoring does not keep Neon awake or use its compute hours.
+   It does keep the Render free instance from spinning down (Render's 750 free hours/month cover one
+   service running all month).
+
+**Neon usage:** the Free plan has **no** usage or spending alerts (Neon only offers them on Launch/Scale), so
+check by hand monthly (below). What happens at the Free limits: past **100 CU-hours** in a month the database
+**is suspended** (the app goes down) until the month resets; past **1 GB** storage writes fail; past **5 GB**
+egress the compute is suspended. To make compute hours last, set Neon → Branches → `production` → compute →
+**Edit** → autoscaling max **0.5 CU** (enough for this app). If usage gets close to a limit, upgrade to
+Launch (pay as you go) and turn on Billing → **Spending notifications**.
+
+## Deploy
+
+Render deploys every push to `main` automatically (build ≈ 5 min, then a zero-downtime swap once `/healthz`
+answers).
+
+1. Tests pass locally: `php artisan test` and `composer test:pgsql`.
+2. **If the commit adds migrations:** run `scripts\migrate-production.ps1` **before** pushing (migrations must
+   be additive so the old code keeps working; see "Run migrations").
+3. Push to `main` (only after review). Watch Render → service → **Events** until "Deploy live".
+4. Check: `https://crm.hybridmonks.com/healthz` says `ok`, sign in, open Leads.
+5. If the deploy changed mail settings: "Check email".
+
+A deploy whose boot checks fail (missing `APP_KEY`/`APP_URL`/`DB_URL`, debug on) never goes live: Render
+keeps the previous version running and the deploy log names the setting.
+
+## Roll back a bad deploy
+
+1. Render → service → **Events** → find the last good deploy → **Rollback**. Takes about a minute.
+2. Auto-deploy will ship the next push to `main` again, so fix forward with `git revert <bad commit>` and push.
+3. Migrations are **not** rolled back. Additive migrations are harmless for older code. If a migration itself
+   was the problem, see "Run migrations > If it fails".
+
+## Check email
+
+After deploys that touch mail, and when someone says an invite or reset never arrived:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\production-artisan.ps1 crm:mail-test you@hybridmonks.com
+```
+It asks for the Neon direct URL, `APP_KEY` and `RESEND_API_KEY` (hidden) and only sends to an active admin.
+Then check the inbox (and spam) and Resend → **Emails** for the delivery status. Common causes: domain not
+verified in Resend, wrong `MAIL_FROM_ADDRESS`, revoked key.
+
+## Admins
+
+**Keep at least two active admins at all times**, each with two-step sign-in, so one can always recover the other.
+Admins without two-step sign-in can only reach My Profile until they set it up.
+
+**Add an admin:** Users → **Invite user**, role **Admin**. They set their own password from the emailed link
+(48 hours, single use), then must set up two-step sign-in. Confirm it shows "On" for them.
+
+**Recover an admin:**
+- Forgot password: "Forgot password?" on the sign-in page.
+- Lost phone: sign in with a recovery code. No codes left: **another admin** → Users → the admin → **Turn off
+  two-step sign-in** (nobody can do this for themselves). They then set it up again on next sign-in.
+- No admin can sign in at all: create a new one from your machine, then use it to recover the others:
+  `powershell -ExecutionPolicy Bypass -File scripts\production-artisan.ps1 crm:create-admin`
+
+## Offboard a user
+
+1. Users → the user → **Deactivate**: choose who takes over their leads and follow-ups. Their sessions end
+   immediately and they can no longer sign in (users are never deleted; history stays).
+2. If they had access to any of these, remove it: Bitwarden collection, GitHub repo, Render, Neon,
+   Cloudflare, Resend, UptimeRobot, Vercel DNS.
+3. If they could see any secret (Bitwarden), rotate those secrets (below).
+
+## Rotate secrets
+
+Store every new value in Bitwarden (replace the old item) and nowhere else.
+
+**APP_KEY** (only if leaked; it encrypts two-step secrets and staged imports):
+1. `php artisan key:generate --show` → new key.
+2. Render → Environment: set `APP_PREVIOUS_KEYS` to the **old** key and `APP_KEY` to the new one. Save
+   (redeploys). Old encrypted data still decrypts through `APP_PREVIOUS_KEYS`; new data uses the new key.
+3. Keep `APP_PREVIOUS_KEYS` set. Everyone is signed out once.
+
+**Resend API key:** Resend → API Keys → create a new one (Sending access, `hybridmonks.com`) → Render
+`RESEND_API_KEY` → wait for the deploy → "Check email" → delete the old key in Resend.
+
+**Database password:** Neon → `monkcrm` → Roles → the app role (`neondb_owner`) → **Reset password**. Copy the
+new pooled and direct URLs → Render `DB_URL` (pooled) → GitHub secret `NEON_DIRECT_URL` (direct) →
+Bitwarden. The app errors until Render's redeploy finishes (about 5 minutes), so do it out of hours.
+
+**R2 token:** Cloudflare → R2 → Manage API tokens → create a new token (same settings) → GitHub secrets
+`R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` → run **Backup** manually → delete the old token.
+
+**Backup age key:** generate a new pair, update both GitHub secrets, store it in Bitwarden. Keep the **old
+private key** in Bitwarden until the last backup made with it has expired (12 months), or old backups
+become unreadable.
+
+## Leaked secret
+
+A secret is leaked if it was pasted into chat, a ticket, email, a commit (even if deleted), or seen by someone
+who shouldn't have it.
+
+1. **Rotate it now** ("Rotate secrets"). Rotation is the fix; deleting the message or commit is not.
+2. **Check for misuse:** Audit log (unknown sign-ins, exports), Neon → Monitoring (unusual connections),
+   Resend → Emails/Logs (mail you didn't send), Cloudflare R2 metrics.
+3. **If it was committed:** the pre-commit hook should have stopped it; find out why it didn't. Rewriting git
+   history is optional after rotation (forks and clones keep the old commits anyway).
+4. Tell the other admin what leaked, when it was rotated, and what you checked.
+
+## Monthly checks (first working day)
+
+- [ ] GitHub → Actions: **Backup** green every night, **Restore test** green this month (and scheduled runs
+      still enabled).
+- [ ] Neon → project → **Usage**: compute hours, storage and network transfer well under 100 CU-hours / 1 GB /
+      5 GB. The nightly dump counts toward transfer (about the database size per night): if the database is
+      over ~100 MB, plan the Launch upgrade.
+- [ ] Neon → Branches: delete old `backup-before-migrate-*` / `before-restore-*` branches (10 max).
+- [ ] UptimeRobot: monitor up, alert contacts still correct.
+- [ ] Users: at least two active admins, both with two-step sign-in "On"; deactivate anyone who left.
+- [ ] Audit log: skim exports, imports, role changes and failed sign-ins.
+- [ ] Render: no failed deploys; Resend: no spike in bounces.
+- [ ] `composer audit` and `npm audit` on `main`; update dependencies if anything is flagged.
