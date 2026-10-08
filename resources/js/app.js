@@ -175,6 +175,51 @@ Alpine.data('tabPanel', () => ({
     },
 }));
 
+// Drag-and-drop reordering (Settings statuses/sources). Rows have draggable="true" and data-id;
+// dropping posts the full order to data-reorder-url. Move up/down buttons are the keyboard way.
+Alpine.data('sortable', () => ({
+    dragged: null,
+    start(event) {
+        this.dragged = event.currentTarget;
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', this.dragged.dataset.id);
+        this.dragged.classList.add('opacity-40');
+    },
+    over(event) {
+        event.preventDefault();
+        const target = event.currentTarget;
+        if (!this.dragged || target === this.dragged) {
+            return;
+        }
+        const rect = target.getBoundingClientRect();
+        const after = event.clientY > rect.top + rect.height / 2;
+        target.parentNode.insertBefore(this.dragged, after ? target.nextSibling : target);
+    },
+    drop(event) {
+        event.preventDefault();
+    },
+    end() {
+        if (!this.dragged) {
+            return;
+        }
+        this.dragged.classList.remove('opacity-40');
+        this.dragged = null;
+        this.save();
+    },
+    save() {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = this.$el.dataset.reorderUrl;
+        const token = document.querySelector('meta[name="csrf-token"]').content;
+        form.append(Object.assign(document.createElement('input'), { type: 'hidden', name: '_token', value: token }));
+        this.$el.querySelectorAll('[data-id]').forEach((row) => {
+            form.append(Object.assign(document.createElement('input'), { type: 'hidden', name: 'ids[]', value: row.dataset.id }));
+        });
+        document.body.append(form);
+        form.submit();
+    },
+}));
+
 // <x-input reveal>: show/hide password.
 Alpine.data('passwordReveal', () => ({
     shown: false,

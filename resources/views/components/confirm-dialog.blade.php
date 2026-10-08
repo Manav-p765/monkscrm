@@ -9,13 +9,13 @@
     trigger-variant: button style for the opening button (danger | danger-soft | secondary | ghost | text).
     trigger-icon:    optional Lucide icon for the opening button (icon-only when trigger-label-hidden).
 --}}
-@props(['trigger', 'title', 'action', 'confirm', 'method' => 'POST', 'triggerVariant' => 'danger-soft', 'triggerSize' => 'md',
+@props(['trigger', 'title', 'action', 'confirm', 'method' => 'POST', 'triggerVariant' => 'danger-soft', 'triggerSize' => 'md', 'triggerLabel' => null,
     'triggerIcon' => null, 'loading' => 'Working…'])
 
 @php($dialogId = 'confirm-'.\Illuminate\Support\Str::random(8))
 
 <div x-data="confirmDialog" {{ $attributes->class('inline-block') }}>
-    <x-button type="button" :variant="$triggerVariant" :size="$triggerSize" :icon="$triggerIcon" x-on:click="open" aria-haspopup="dialog">{{ $trigger }}</x-button>
+    <x-button type="button" :variant="$triggerVariant" :size="$triggerSize" :icon="$triggerIcon" x-on:click="open" aria-haspopup="dialog">@if ($triggerLabel)<span class="sr-only">{{ $triggerLabel }}</span>@endif{{ $trigger }}</x-button>
 
     <dialog x-ref="dialog" aria-labelledby="{{ $dialogId }}-title"
             class="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-6 text-left text-slate-900 shadow-2xl">

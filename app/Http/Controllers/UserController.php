@@ -16,6 +16,8 @@ use App\Models\Team;
 use App\Models\User;
 use App\Notifications\InviteUser;
 use App\Support\Audit;
+use App\Support\Permissions;
+use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -226,6 +228,10 @@ class UserController extends Controller
                     ->where('status', FollowUpStatus::Pending)->count(),
             ] : null,
             'credential' => $this->openLink(session('credential_link')),
+            // Read-only role matrix (as on the prototype's Users page); same source as the gates.
+            'matrixPermissions' => Permissions::all(),
+            'matrixRoles' => Role::cases(),
+            'matrixSettings' => Settings::all(),
         ]);
     }
 

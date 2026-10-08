@@ -140,6 +140,15 @@
     </x-table>
 
     @if ($canManage)
+        {{-- Role & permission matrix (prototype), generated from the real permission rules --}}
+        <section aria-labelledby="matrix-heading" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs">
+            <div>
+                <h2 id="matrix-heading" class="text-sm font-bold text-slate-900">Role &amp; Access Control Matrix</h2>
+                <p class="mt-0.5 text-xs text-slate-500">What Admin, Manager and Sales can do. Change "Configurable" items in Settings → Security &amp; Rules.</p>
+            </div>
+            @include('settings._permission-matrix')
+        </section>
+
         {{-- Teams --}}
         <section aria-labelledby="teams-heading" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs">
             <div>

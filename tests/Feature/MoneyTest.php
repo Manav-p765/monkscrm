@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\Currency;
 use App\Models\Lead;
-use App\Models\Setting;
+use App\Support\Settings;
 use App\Rules\EnabledCurrency;
 use App\Support\Money;
 use Database\Seeders\DatabaseSeeder;
@@ -79,21 +79,21 @@ class MoneyTest extends TestCase
         $this->assertSame([Currency::USD, Currency::INR], Currency::enabled());
         $this->assertSame(Currency::USD, Currency::default());
 
-        Setting::where('key', 'default_currency')->update(['value' => json_encode('INR')]);
+        Settings::update(['default_currency' => 'INR']);
         $this->assertSame(Currency::INR, Lead::factory()->create(['currency' => null])->currency);
 
         // A default that is not enabled falls back to the first enabled currency.
-        Setting::where('key', 'default_currency')->update(['value' => json_encode('EUR')]);
+        Settings::update(['default_currency' => 'EUR']);
         $this->assertSame(Currency::USD, Currency::default());
     }
 
     public function test_disabled_currency_still_displays_and_stays_valid_on_existing_leads(): void
     {
         $this->seed(DatabaseSeeder::class);
-        Setting::where('key', 'enabled_currencies')->update(['value' => json_encode(['USD', 'INR', 'GBP'])]);
+        Settings::update(['enabled_currencies' => ['USD', 'INR', 'GBP']]);
         $lead = Lead::factory()->create(['deal_value' => 250000, 'currency' => 'GBP']);
 
-        Setting::where('key', 'enabled_currencies')->update(['value' => json_encode(['USD', 'INR'])]);
+        Settings::update(['enabled_currencies' => ['USD', 'INR']]);
         $lead = $lead->fresh();
 
         $this->assertSame(Currency::GBP, $lead->currency);

@@ -5,6 +5,10 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PlaceholderController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Settings\LeadSourceController;
+use App\Http\Controllers\Settings\LeadStatusController;
+use App\Http\Controllers\Settings\SettingsController;
+use App\Http\Controllers\Settings\TagController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\UserController;
 use App\Models\Lead;
@@ -74,10 +78,32 @@ Route::middleware('auth')->group(function () {
         Route::put('/teams/{team}', [TeamController::class, 'update'])->name('teams.update');
     });
 
-    Route::get('/settings', PlaceholderController::class)
-        ->defaults('section', 'Settings')
-        ->middleware('can:manage-settings')
-        ->name('settings.index');
+    // Settings (admin only). Nothing here is ever deleted except tags.
+    Route::middleware('can:manage-settings')->prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [SettingsController::class, 'statuses'])->name('index');
+        Route::get('/statuses', [SettingsController::class, 'statuses'])->name('statuses');
+        Route::get('/sources', [SettingsController::class, 'sources'])->name('sources');
+        Route::get('/tags', [SettingsController::class, 'tags'])->name('tags');
+        Route::get('/general', [SettingsController::class, 'general'])->name('general');
+        Route::put('/general', [SettingsController::class, 'updateGeneral'])->name('general.update');
+        Route::get('/permissions', [SettingsController::class, 'permissions'])->name('permissions');
+
+        Route::post('/statuses', [LeadStatusController::class, 'store'])->name('statuses.store');
+        Route::post('/statuses/reorder', [LeadStatusController::class, 'reorder'])->name('statuses.reorder');
+        Route::put('/statuses/{status}', [LeadStatusController::class, 'update'])->name('statuses.update');
+        Route::post('/statuses/{status}/move', [LeadStatusController::class, 'reorder'])->name('statuses.move');
+        Route::post('/statuses/{status}/default', [LeadStatusController::class, 'makeDefault'])->name('statuses.default');
+
+        Route::post('/sources', [LeadSourceController::class, 'store'])->name('sources.store');
+        Route::post('/sources/reorder', [LeadSourceController::class, 'reorder'])->name('sources.reorder');
+        Route::put('/sources/{source}', [LeadSourceController::class, 'update'])->name('sources.update');
+        Route::post('/sources/{source}/move', [LeadSourceController::class, 'reorder'])->name('sources.move');
+        Route::post('/sources/{source}/default', [LeadSourceController::class, 'makeDefault'])->name('sources.default');
+
+        Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
+        Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update');
+        Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy');
+    });
 
     Route::middleware('can:view-audit-log')->group(function () {
         Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
