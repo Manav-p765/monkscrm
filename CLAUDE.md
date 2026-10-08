@@ -74,8 +74,18 @@ over-engineer and do not add packages unless clearly needed.
 - Models use explicit `$fillable` (never `$guarded = []`). Ownership fields such as `created_by`,
   `user_id` and `lead_id` are set in code, not mass-assigned from requests.
 - Roles: `App\Enums\Role` (admin, manager, sales). Use `$user->isAdmin()`, `isManager()`, `isSales()`.
-- Gates (in `AppServiceProvider`): `manage-users`, `manage-settings`, `view-audit-log` (admin);
-  `view-users`, `export-leads`, `import-leads` (admin, manager).
+- **Permissions live in one place: `config('crm.permissions')`.** Gates are generated from its `gate`
+  entries (`manage-users`, `manage-teams`, `manage-settings`, `view-audit-log` admin; `view-users`,
+  `view-reports`, `export-leads`, `import-leads` admin + manager); policies call
+  `App\Support\Permissions::allows($user, 'key')`; the Settings permissions table renders the same list.
+  Add or change a permission there, never by hard-coding roles.
+- Audit log: `App\Support\Audit::log($action, $subject, $meta)` (strips meta keys containing password,
+  token, secret, code). Add a readable name for every new action to `config('crm.audit_actions')`.
+- Settings: read with `App\Support\Settings::get()` (cached), change only with `Settings::update()`
+  (writes, audits old/new, clears the cache). Defaults are seeded by `SettingSeeder`.
+- Users are invited, never given a password: `$user->createInviteLink()` (broker `invites`, single use,
+  48 hours, table `user_invite_tokens`). Users are never deleted; deactivate them (`DeactivateUser`).
+- Case-insensitive unique names: `App\Rules\UniqueIgnoringCase` (matches the `lower(name)` indexes).
 - CSP is strict (nonce-based, no `unsafe-inline`/`unsafe-eval`). Do not add inline `<script>`/`<style>`
   or `style=""` attributes. Put Alpine logic in `resources/js/app.js` via `Alpine.data()` and
   reference components by name in `x-data`. Do not load assets from CDNs.

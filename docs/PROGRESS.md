@@ -5,7 +5,7 @@
 | 1 | Foundation | ✅ Done |
 | 1c | PostgreSQL + Docker readiness | ✅ Done |
 | 1d | Design audit + currency groundwork | ✅ Done |
-| 2 | Users / teams / settings / currencies / audit log | ⬜ Not started |
+| 2 | Design system / shell / users / teams / settings / audit log | ✅ Done |
 | 3 | Leads CRUD / list / search / filters / duplicates / bulk actions / Kanban | ⬜ Not started |
 | 4 | Lead detail / notes / activities / follow-ups / timeline / alerts bell | ⬜ Not started |
 | 5 | Dashboard / Reports | ⬜ Not started |
@@ -66,20 +66,34 @@
 - Tests: 65 passing + 1 skipped (SQLite). `composer test:pgsql` was not run: the local PHP
   (Herd Lite) has no `pdo_pgsql`.
 
-## MVP plan (all prototype features)
+## Step 2: Design system, shell, users, settings, audit log (done, 2026-10-08)
 
-### Step 2: Users / teams / settings / currencies / audit log
-- Audit helper; auth events (see "Carried forward").
-- Users: list, create user via emailed set-password link (never an admin-typed password), edit role,
-  team, job title, phone; deactivate/reactivate; send password reset link. Manager: read-only
-  directory. Read-only role & permissions table on the Users page.
-- Teams (needs migration: see audit G2 / teams do not limit lead visibility, D8).
-- Settings: statuses (add, rename, color, description, reorder, enable/disable, won/lost, delete only
-  if unused), sources (add, enable/disable; system sources protected), tags (add, color, delete),
-  "Sales can view all leads", duplicate rules (read-only), default status and default source,
-  **currencies** (enable from the fixed list; default must be enabled; can't disable the default).
-  Every settings change is audit-logged, including currency changes.
-- My profile: name, phone, job title (password + 2FA already done).
+- **Local dev:** native PHP 8.4.26 (windows.php.net, checksum verified) in `D:\php84` with pdo_pgsql etc.,
+  first on the user PATH; local `.env` on the monks-crm-postgres container (5434). Money formatter
+  cross-checked against intl.
+- **Design system:** prototype tokens in `@theme` (`resources/css/app.css`), Plus Jakarta Sans via
+  `@fontsource`, Lucide icons via `mallardduck/blade-lucide-icons` (server-side SVG). Components
+  restyled from the prototype TSX; new: modal, slide-over, tabs, dropdown, stat, avatar, date, checkbox,
+  filter bar. CLAUDE.md "UI rules" rewritten: the prototype is the source of truth.
+- **Shell:** prototype sidebar (role-based, routes gated), header search (`/` shortcut), alerts bell
+  (UI only), user area; sign-in screens, profile, error pages restyled.
+- **Schema:** teams, user team/job title/phone, status description + milestone, lead milestone
+  timestamps, encrypted `import_rows`, `user_invite_tokens`, nullable `follow_ups.assigned_to`;
+  12 default statuses (seeder upgrades existing databases safely); new settings.
+- **Times:** UTC stored, IST shown (`<x-date>`, `App\Support\Dates`), input read as IST.
+- **Audit log:** `Audit::log()`, auth events, admin-only page with filters and details slide-over.
+- **Users & teams:** invite links (no admin-set passwords), credentials card, edit, resend, reset link,
+  two-step off, sign out everywhere, deactivate with reassignment (one transaction, sessions killed),
+  reactivate; UserPolicy safety rules; teams; manager read-only directory.
+- **Settings:** cached service, statuses/sources/tags/security & rules/permissions table (generated
+  from `config('crm.permissions')`, which also generates the gates).
+- Tests: SQLite 124 passed + 1 skipped; PostgreSQL 125/125.
+- Not done from the original plan: editing your own name/phone/job title on My Profile (admins edit
+  them on the Users page). Moved to Step 3.
+
+Steps 3–6 follow `docs/OVERNIGHT_PLAN.md`; progress in `docs/OVERNIGHT_LOG.md`.
+
+## MVP plan (all prototype features)
 
 ### Step 3: Leads + Kanban
 - Visibility scope + real `LeadPolicy`.
@@ -114,7 +128,6 @@
 - Export CSV (filtered or selected; formula-escaped; includes deal value + currency); audited.
 
 ### Carried forward
-- Step 2: audit helper, then write `auth.login`, `auth.login_failed`, `auth.logout`,
-  `auth.password_reset`, `auth.2fa_*` events (hooks exist: Fortify/Laravel auth events).
-- Step 3: replace `LeadPolicy` stubs, add the lead visibility scope.
+- Step 3: replace `LeadPolicy` stubs, add the lead visibility scope; My Profile name/phone/job title.
+- Step 7: run `php artisan icons:cache` at container start (blade-icons) for faster rendering.
 - Step 7: enforce 2FA for admins; production deploy checklist (TRUSTED_PROXIES, SMTP, queue, backups).
