@@ -1,0 +1,84 @@
+# Monthly proof that backups can be restored: download the latest backup, decrypt it, restore it into a
+# throwaway Postgres 18 container, check the core tables and print row counts (counts only, never data).
+# The age PRIVATE key is used only here. Setup: RUNBOOK.md "Backups".
+name: Restore test
+
+on:
+  schedule:
+    - cron: '0 22 1 * *'   # 2nd of each month, 03:30 IST
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  restore-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          # Throwaway container that lives only for this job: no password needed.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: restore_test
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - name: Install age
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age
+
+      - name: Download the latest backup
+        run: |
+          set -euo pipefail
+          key=$(aws s3api list-objects-v2 --bucket "$R2_BUCKET" --prefix daily/ --endpoint-url "$R2_ENDPOINT" \
+            --query 'Contents[].Key' --output text | tr '\t' '\n' | grep -v '^None$' | grep -v '^$' | sort | tail -n 1)
+          if [ -z "$key" ]; then echo "::error::No backups found in daily/."; exit 1; fi
+          echo "Latest backup: $key"
+          # Backups older than 2 days mean the nightly job has stopped.
+          day=$(echo "$key" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+          age_days=$(( ( $(date -u +%s) - $(date -u -d "$day" +%s) ) / 86400 ))
+          if [ "$age_days" -gt 2 ]; then echo "::error::Latest backup is $age_days days old."; exit 1; fi
+          aws s3 cp "s3://$R2_BUCKET/$key" backup.dump.age --endpoint-url "$R2_ENDPOINT" --no-progress
+
+      - name: Decrypt and restore into the throwaway database
+        env:
+          PG: ${{ job.services.postgres.id }}
+          AGE_PRIVATE_KEY: ${{ secrets.BACKUP_AGE_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          keyfile="$RUNNER_TEMP/backup-age.key"
+          printf '%s\n' "$AGE_PRIVATE_KEY" > "$keyfile"
+          # Decrypted data only exists in the pipe; pg_restore 18 runs inside the service container.
+          age --decrypt --identity "$keyfile" backup.dump.age \
+            | docker exec -i "$PG" pg_restore --username=postgres --dbname=restore_test --no-owner --no-privileges --exit-on-error
+          rm -f "$keyfile"
+
+      - name: Check core tables and print row counts
+        env:
+          PG: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          q() { docker exec "$PG" psql --username=postgres --dbname=restore_test -tAX -c "$1"; }
+          missing=0
+          for t in migrations users leads lead_statuses lead_sources tags settings audit_logs follow_ups activities lead_notes; do
+            if [ "$(q "select to_regclass('public.$t') is not null")" != "t" ]; then
+              echo "::error::Table $t is missing from the restored backup."; missing=1; continue
+            fi
+            printf '%-15s %s rows\n' "$t" "$(q "select count(*) from public.$t")"
+          done
+          [ "$missing" -eq 0 ]
+          if [ "$(q 'select count(*) from migrations')" -eq 0 ]; then echo "::error::No migrations recorded."; exit 1; fi
+
+      - name: Clean up
+        if: always()
+        run: rm -f backup.dump.age "$RUNNER_TEMP/backup-age.key"

@@ -1,0 +1,92 @@
+# Nightly encrypted backup of the production database to Cloudflare R2.
+# Secrets and setup: RUNBOOK.md "Backups". Restore: RUNBOOK.md "Restore a backup".
+#
+# 02:00 IST = 20:30 UTC. GitHub may start scheduled runs some minutes late.
+# If any step fails the run fails, and GitHub emails the person who last edited this schedule.
+name: Backup
+
+on:
+  schedule:
+    - cron: '30 20 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      # Cloudflare's recommended settings for the AWS CLI against R2.
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - name: Check secrets are set
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DIRECT_URL }}
+          AGE_PUBLIC_KEY: ${{ secrets.BACKUP_AGE_PUBLIC_KEY }}
+        run: |
+          for name in DATABASE_URL AGE_PUBLIC_KEY AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY R2_BUCKET; do
+            if [ -z "${!name}" ]; then echo "::error::Secret for $name is not set."; exit 1; fi
+          done
+          case "$DATABASE_URL" in
+            *-pooler*) echo "::error::NEON_DIRECT_URL is the pooled URL; use the direct one."; exit 1 ;;
+          esac
+
+      - name: Install age
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age
+
+      - name: Dump, compress and encrypt
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DIRECT_URL }}
+          AGE_PUBLIC_KEY: ${{ secrets.BACKUP_AGE_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          day=$(TZ=Asia/Kolkata date +%F)
+          echo "DAY=$day" >> "$GITHUB_ENV"
+          # pg_dump 18 (matches Neon) from the official image. Custom format is compressed.
+          # The plain dump only exists in the pipe; only the encrypted file touches disk.
+          docker run --rm -e DATABASE_URL postgres:18 \
+            sh -c 'exec pg_dump --dbname="$DATABASE_URL" --format=custom --compress=9 --no-owner --no-privileges' \
+            | age --encrypt --recipient "$AGE_PUBLIC_KEY" > backup.dump.age
+          size=$(stat -c %s backup.dump.age)
+          echo "Encrypted backup: $size bytes"
+          if [ "$size" -lt 10000 ]; then echo "::error::Backup is suspiciously small ($size bytes)."; exit 1; fi
+
+      - name: Upload to R2
+        run: |
+          set -euo pipefail
+          aws s3 cp backup.dump.age "s3://$R2_BUCKET/daily/neondb-$DAY.dump.age" --endpoint-url "$R2_ENDPOINT" --no-progress
+          # First of the month (IST): also keep a monthly copy.
+          if [ "$(TZ=Asia/Kolkata date +%d)" = "01" ]; then
+            aws s3 cp backup.dump.age "s3://$R2_BUCKET/monthly/neondb-${DAY:0:7}.dump.age" --endpoint-url "$R2_ENDPOINT" --no-progress
+          fi
+
+      - name: Apply retention (30 daily, 12 monthly)
+        run: |
+          set -euo pipefail
+          prune() {
+            local prefix=$1 keep=$2
+            aws s3api list-objects-v2 --bucket "$R2_BUCKET" --prefix "$prefix" --endpoint-url "$R2_ENDPOINT" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | grep -v '^None$' | grep -v '^$' \
+              | sort -r | tail -n +$((keep + 1)) | while read -r key; do
+                echo "Deleting $key"
+                aws s3 rm "s3://$R2_BUCKET/$key" --endpoint-url "$R2_ENDPOINT"
+              done
+          }
+          prune daily/ 30
+          prune monthly/ 12
+
+      - name: Remove local file
+        if: always()
+        run: rm -f backup.dump.age
