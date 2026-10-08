@@ -30,7 +30,8 @@ RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --pr
 
 COPY . .
 RUN composer dump-autoload --no-dev --optimize --classmap-authoritative --no-scripts \
-    && php artisan package:discover --ansi
+    && APP_ENV=build php artisan package:discover --ansi
+# (APP_ENV=build: the production boot guard needs runtime secrets that a build never has.)
 
 # ---------------------------------------------------------------------------
 # assets: Vite build in a separate Node stage (Node is not in the final image).

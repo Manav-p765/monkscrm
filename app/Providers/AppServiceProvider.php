@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Support\Permissions;
+use App\Support\ProductionGuard;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -45,12 +46,13 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Refuse to boot a production app with debug mode on (it would leak stack traces and env values).
+     * Refuse to boot a misconfigured production app (debug on would leak stack traces and env values;
+     * a missing key, URL or database would fail later in confusing ways). See ProductionGuard.
      */
     private function guardProductionConfig(): void
     {
-        if ($this->app->isProduction() && config('app.debug')) {
-            throw new RuntimeException('Refusing to boot: APP_DEBUG must be false when APP_ENV=production.');
+        if ($this->app->isProduction() && $problems = ProductionGuard::problems()) {
+            throw new RuntimeException('Refusing to boot in production: '.implode('; ', $problems).'.');
         }
     }
 
