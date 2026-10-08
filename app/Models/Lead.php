@@ -27,7 +27,8 @@ class Lead extends Model
 
     /**
      * Ownership/system fields (reference, created_by, original_source_id, *_normalized,
-     * activity timestamps) are deliberately not fillable.
+     * activity timestamps) are deliberately not fillable. Nor are status, assignee and next
+     * follow-up: they change only through LeadStatusChanger, LeadAssigner and FollowUps::sync().
      *
      * @var list<string>
      */
@@ -48,11 +49,8 @@ class Lead extends Model
         'country',
         'website',
         'description',
-        'lead_status_id',
         'lead_source_id',
         'priority',
-        'assigned_to',
-        'next_follow_up_at',
         'deal_value',
         'currency',
     ];

@@ -45,7 +45,12 @@ class LeadExportController extends Controller
         LeadFilters::apply($query, $filters, $user);
         $count = min(self::MAX_ROWS, (clone $query)->toBase()->getCountForPagination());
 
-        Audit::log('leads.exported', null, ['filters' => array_filter($filters), 'columns' => $columns, 'rows' => $count]);
+        // The search text may be a lead's email or phone: record only that a search was used.
+        $logged = array_filter($filters);
+        if (isset($logged['q'])) {
+            $logged['q'] = '(search)';
+        }
+        Audit::log('leads.exported', null, ['filters' => $logged, 'columns' => $columns, 'rows' => $count]);
 
         return response()->streamDownload(function () use ($query, $columns) {
             $out = fopen('php://output', 'w');

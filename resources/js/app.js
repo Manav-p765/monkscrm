@@ -24,7 +24,8 @@ async function fetchFragment(url) {
         credentials: 'same-origin',
         cache: 'no-store',
     });
-    if (!response.ok) {
+    // A redirect means the session expired (we were sent to the sign-in page): never inject that page.
+    if (!response.ok || response.redirected) {
         throw new Error(String(response.status));
     }
     return response.text();

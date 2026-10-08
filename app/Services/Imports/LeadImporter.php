@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\Leads\LeadAssigner;
 use App\Services\Leads\LeadStatusChanger;
 use App\Support\Audit;
+use App\Support\Csv;
 use App\Support\Money;
 use App\Support\Permissions;
 use App\Support\Settings;
@@ -124,7 +125,7 @@ class LeadImporter
             $value instanceof DateTimeInterface => $value->format('Y-m-d'),
             is_bool($value) => $value ? '1' : '0',
             is_float($value) && floor($value) === $value => (string) (int) $value,
-            default => trim((string) $value),
+            default => Csv::unescape(trim((string) $value)),
         };
     }
 
@@ -340,7 +341,6 @@ class LeadImporter
         $lead = new Lead(collect($fields)->except(['tags', 'deal_value', 'assigned_to', 'status_id', 'source_id'])->all());
         $lead->lead_status_id = $fields['status_id'];
         $lead->lead_source_id = $fields['source_id'];
-        $lead->assigned_to = $fields['assigned_to'] ?? null;
         $lead->deal_value = $fields['deal_value'] ?? null;
         $lead->created_by = $importer->id;
         $lead->import_id = $import->id;
@@ -358,6 +358,10 @@ class LeadImporter
         ]);
         $activity->user_id = $importer->id;
         $activity->save();
+
+        if (! empty($fields['assigned_to'])) {
+            $this->assigner->assign($lead, User::find($fields['assigned_to']), $importer, 'import');
+        }
     }
 
     /** Update: only fields that have a value in the file; status/assignee through the services. */
@@ -437,7 +441,9 @@ class LeadImporter
     }
 
     /**
-     * One file row → lead fields + plain-language errors.
+     * One file row → lead fields + plain-language errors. Errors are stored unencrypted
+     * (import_rows.errors), so they never quote contact details (email, phone); the original
+     * values stay in the encrypted row data and the error-rows CSV.
      *
      * @return array{0: array<string, mixed>, 1: list<string>}
      */
@@ -475,13 +481,13 @@ class LeadImporter
             $errors[] = 'Missing an email or phone';
         }
         if ($email !== '') {
-            filter_var($email, FILTER_VALIDATE_EMAIL) ? $f['email'] = mb_strtolower($email) : $errors[] = "“{$email}” isn't a valid email";
+            filter_var($email, FILTER_VALIDATE_EMAIL) ? $f['email'] = mb_strtolower($email) : $errors[] = "Email isn't a valid email address";
         }
         if (($v['secondary_email'] ?? '') !== '') {
             filter_var($v['secondary_email'], FILTER_VALIDATE_EMAIL) ? $f['secondary_email'] = $v['secondary_email'] : $errors[] = 'Secondary email isn\'t valid';
         }
         if ($phone !== '') {
-            strlen(preg_replace('/\D+/', '', $phone)) >= 6 ? $f['phone'] = mb_substr($phone, 0, 50) : $errors[] = "“{$phone}” isn't a usable phone number";
+            strlen(preg_replace('/\D+/', '', $phone)) >= 6 ? $f['phone'] = mb_substr($phone, 0, 50) : $errors[] = 'Phone number needs at least 6 digits';
         }
         if (($v['website'] ?? '') !== '') {
             $site = preg_match('#^https?://#i', $v['website']) ? $v['website'] : 'https://'.$v['website'];

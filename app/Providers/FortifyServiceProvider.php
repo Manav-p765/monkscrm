@@ -68,8 +68,7 @@ class FortifyServiceProvider extends ServiceProvider
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower((string) $request->input(Fortify::username())).'|'.$request->ip());
-
-            return Limit::perMinute(5)->by($throttleKey)->response(function (Request $request, array $headers) {
+            $lockedOut = function (Request $request, array $headers) {
                 $seconds = (int) ($headers['Retry-After'] ?? 60);
 
                 Audit::log('auth.lockout', meta: [
@@ -81,8 +80,21 @@ class FortifyServiceProvider extends ServiceProvider
                     ->withErrors([
                         Fortify::username() => __('auth.throttle', ['seconds' => $seconds]),
                     ]);
-            });
+            };
+
+            // 5 a minute per email + IP, and 30 a minute per IP across all emails (credential stuffing).
+            return [
+                Limit::perMinute(5)->by($throttleKey)->response($lockedOut),
+                Limit::perMinute(30)->by('login-ip|'.$request->ip())->response($lockedOut),
+            ];
         });
+
+        // Every other Fortify form submit (forgot/reset password, confirm password, change password,
+        // 2FA setup): 10 a minute per IP and form. Stops reset-email floods and password guessing on
+        // the confirm/change forms. Page views (GET) and login (own limiter above) are not limited here.
+        RateLimiter::for('auth-forms', fn (Request $request) => $request->isMethodSafe() || $request->routeIs('login.store')
+            ? Limit::none()
+            : Limit::perMinute(10)->by('auth-forms:'.$request->path().'|'.$request->ip()));
 
         RateLimiter::for('two-factor', function (Request $request) {
             return Limit::perMinute(5)->by($request->session()->get('login.id').'|'.$request->ip());

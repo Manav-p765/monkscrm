@@ -271,7 +271,7 @@
                             <div><span class="block text-3xs font-semibold text-slate-500 uppercase">Secondary Phone</span><a href="tel:{{ preg_replace('/[^0-9+]/', '', $lead->secondary_phone) }}" class="text-slate-800">{{ $lead->secondary_phone }}</a></div>
                         @endif
                         @if ($lead->website)
-                            <div class="sm:col-span-2"><span class="block text-3xs font-semibold text-slate-500 uppercase">Website</span><a href="{{ $lead->website }}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">{{ $lead->website }}</a></div>
+                            <div class="sm:col-span-2"><span class="block text-3xs font-semibold text-slate-500 uppercase">Website</span>@if (preg_match('#^https?://#i', $lead->website))<a href="{{ $lead->website }}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">{{ $lead->website }}</a>@else{{ $lead->website }}@endif</div>
                         @endif
                     </div>
                 </div>

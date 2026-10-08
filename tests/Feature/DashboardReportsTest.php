@@ -127,9 +127,14 @@ class DashboardReportsTest extends TestCase
         $this->assertStringContainsString('$100 · ₹5,000', $csv);
         $this->assertDatabaseHas('audit_logs', ['action' => 'report.exported']);
 
-        foreach (['=1+1', '+1', '-1', '@SUM(A1)', "\tx"] as $danger) {
+        foreach (['=1+1', '+1+SUM(A1)', '-2+3+cmd|\' /C calc\'!A0', '@SUM(A1)', "\tx", '+A1', '-1+1'] as $danger) {
             $this->assertSame("'".$danger, Csv::cell($danger));
         }
-        $this->assertSame('Plain', Csv::cell('Plain'));
+        // Phone numbers and negative numbers can't call anything: left readable.
+        foreach (['Plain', '+91 98765 43210', '+1 (555) 010-0199', '-500', '-12.50'] as $safe) {
+            $this->assertSame($safe, Csv::cell($safe));
+        }
+        $this->assertSame('=SUM(A1)', Csv::unescape("'=SUM(A1)"));
+        $this->assertSame("'quoted", Csv::unescape("'quoted"));
     }
 }

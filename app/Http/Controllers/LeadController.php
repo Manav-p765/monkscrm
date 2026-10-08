@@ -75,7 +75,10 @@ class LeadController extends Controller
         }
 
         $lead = DB::transaction(function () use ($request, $user) {
-            $lead = new Lead($this->fields($request));
+            $fields = $this->fields($request);
+            $assignee = $fields['assigned_to'] ?? null;
+            $lead = new Lead(collect($fields)->except(['lead_status_id', 'assigned_to'])->all());
+            $lead->lead_status_id = $fields['lead_status_id'];
             $lead->deal_value = $request->dealValueMinor();
             $lead->created_by = $user->id;
             $lead->last_activity_at = now();
@@ -99,6 +102,11 @@ class LeadController extends Controller
             $activity->save();
 
             Audit::log('lead.created', $lead, ['reference' => $lead->reference]);
+
+            // Through the assignment service, so the assignee gets the "newly assigned" alert.
+            if ($assignee) {
+                $this->assigner->assign($lead, User::find($assignee), $user, 'form');
+            }
 
             return $lead;
         });
