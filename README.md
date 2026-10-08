@@ -13,6 +13,7 @@ Production runs as a Docker container on Render with a Neon PostgreSQL database 
 ## Local setup
 ```bash
 git clone <repo-url> crm && cd crm
+git config core.hooksPath scripts/git-hooks   # secret check before every commit (required)
 composer install
 cp .env.example .env            # set DB_* for your local PostgreSQL (and MAIL_* for real emails)
 php artisan key:generate
@@ -22,6 +23,11 @@ npm install
 npm run build                   # or `npm run dev` while working on the UI
 php artisan serve               # http://localhost:8000
 ```
+
+The pre-commit hook (`scripts/git-hooks/pre-commit`) blocks commits that add `.env` files, Resend keys
+(`re_...`), `base64:` APP_KEY values, Neon passwords or Postgres URLs with a password. It prints the file and
+line, never the value. If it blocks you, replace the value with a placeholder; if a real secret was ever
+committed, follow RUNBOOK.md "Leaked secret".
 
 No local PostgreSQL? Run one in Docker (data persists in a named volume). The local `.env` and
 `.env.testing.pgsql` expect it on port 5434:

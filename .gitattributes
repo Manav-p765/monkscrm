@@ -14,3 +14,4 @@ CHANGELOG.md export-ignore
 *.sh text eol=lf
 docker/* text eol=lf
 Dockerfile text eol=lf
+scripts/git-hooks/* text eol=lf

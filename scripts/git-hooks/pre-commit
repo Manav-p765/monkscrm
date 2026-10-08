@@ -1,0 +1,51 @@
+#!/bin/sh
+# Blocks commits that add secrets. Install once per clone:
+#   git config core.hooksPath scripts/git-hooks
+# Reports file, line and the kind of secret, never the value.
+
+fail=0
+
+# Real env files must never be committed (the .example templates are fine).
+for f in $(git diff --cached --name-only --diff-filter=ACMR); do
+    case "$f" in
+        *.example) ;;
+        .env|.env.*|*/.env|*/.env.*)
+            echo "pre-commit: $f is an env file. Keep secrets in .env (gitignored) or Render, not in git." >&2
+            fail=1 ;;
+    esac
+done
+
+# Scan only the lines this commit adds.
+git diff --cached -U0 --no-color --diff-filter=ACMR -- . ':!composer.lock' ':!package-lock.json' |
+awk '
+    /^\+\+\+ / { file = substr($0, 7); next }
+    /^@@/ { split($3, a, ","); line = substr(a[1], 2) - 1; next }
+    /^\+/ {
+        line++
+        s = substr($0, 2)
+        kind = ""
+        # Resend API key (re_ not preceded by a letter, digit or underscore, so "are_..." names pass).
+        if (s ~ /(^|[^A-Za-z0-9_])re_[A-Za-z0-9_]{20,}/) kind = "Resend API key"
+        # Laravel APP_KEY value.
+        else if (s ~ /base64:[A-Za-z0-9+\/]{30,}/) kind = "APP_KEY (base64:) value"
+        # Neon password.
+        else if (s ~ /npg_[A-Za-z0-9]{8,}/) kind = "Neon password"
+        # age private key.
+        else if (s ~ /AGE-SECRET-KEY-1[0-9A-Z]{50,}/) kind = "age private key"
+        # Postgres URL with a password, unless the password is an obvious placeholder.
+        else if (match(s, /postgres(ql)?:\/\/[^:@\/ ]+:[^@ ]+@/)) {
+            u = substr(s, RSTART, RLENGTH)
+            sub(/^postgres(ql)?:\/\/[^:@\/ ]+:/, "", u); sub(/@$/, "", u)
+            if (u !~ /^(PASSWORD|password|<[^>]*>|\*+|\$\{?[A-Z_]+\}?|x+|X+)$/) kind = "Postgres URL with a password"
+        }
+        if (kind != "") { printf "pre-commit: %s:%d looks like a %s.\n", file, line, kind; found = 1 }
+    }
+    END { exit found ? 1 : 0 }
+' >&2 || fail=1
+
+if [ "$fail" -ne 0 ]; then
+    echo "pre-commit: commit blocked. Remove the secret (use a placeholder) and try again." >&2
+    echo "pre-commit: if a secret was ever committed or pushed, rotate it: see RUNBOOK.md, 'Leaked secret'." >&2
+    exit 1
+fi
+exit 0
