@@ -94,7 +94,32 @@ Alpine.data('modal', () => ({
         }
     },
     close() {
+        if (this.$el.dataset.closeHref) {
+            window.location.assign(this.$el.dataset.closeHref);
+            return;
+        }
         this.$refs.dialog.close();
+    },
+    cancel(event) {
+        // Escape: same as the × button (so a modal with its own URL goes back to the list).
+        if (this.$el.dataset.closeHref) {
+            event.preventDefault();
+            this.close();
+        }
+    },
+}));
+
+// Copy button (credentials card): copies data-text to the clipboard and shows "Copied".
+Alpine.data('copyText', () => ({
+    copied: false,
+    copy() {
+        navigator.clipboard.writeText(this.$el.dataset.text).then(() => {
+            this.copied = true;
+            setTimeout(() => (this.copied = false), 2000);
+        });
+    },
+    get notCopied() {
+        return !this.copied;
     },
 }));
 

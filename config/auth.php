@@ -99,6 +99,15 @@ return [
             'expire' => 30,
             'throttle' => 60,
         ],
+
+        // Invite links: the admin creates the user, the user sets their own password.
+        // Single use (the broker deletes the token on use), valid for 48 hours.
+        'invites' => [
+            'provider' => 'users',
+            'table' => 'user_invite_tokens',
+            'expire' => 2880,
+            'throttle' => 0,
+        ],
     ],
 
     /*

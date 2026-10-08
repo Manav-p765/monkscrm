@@ -10,9 +10,17 @@
         @foreach ($leads as $lead) <tr data-href="...">...</tr> @endforeach
     </x-table>
 --}}
-@props(['paginator' => null, 'footer' => null])
+@props(['paginator' => null, 'footer' => null, 'title' => null, 'aside' => null])
 
 <div {{ $attributes->class('bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden') }}>
+    @if ($title)
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 p-4">
+            <span class="text-xs font-bold text-slate-800">{{ $title }}</span>
+            @if ($aside)
+                <span class="text-xs text-slate-500">{{ $aside }}</span>
+            @endif
+        </div>
+    @endif
     <div x-data="clickableRows" class="overflow-x-auto">
         <table x-on:click="go" @class([
             'w-full text-left border-collapse text-xs',

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Password;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable
@@ -112,6 +113,33 @@ class User extends Authenticatable
      * Send the reset email after the HTTP response, so the forgot-password response
      * time doesn't differ between existing and unknown email addresses.
      */
+    /**
+     * A new single-use set-password link (48 hours). Replaces any earlier invite link.
+     * The raw token only exists in this URL; the database stores a hash.
+     */
+    public function createInviteLink(): string
+    {
+        $token = Password::broker('invites')->createToken($this);
+
+        return route('invite.show', ['token' => $token, 'email' => $this->email]);
+    }
+
+    /** Invited but never signed in: the invite can be resent. */
+    public function isInvitePending(): bool
+    {
+        return $this->last_login_at === null;
+    }
+
+    /** Active admins other than this user (there must always be at least one active admin). */
+    public static function otherActiveAdminsExist(self $except): bool
+    {
+        return static::query()
+            ->where('role', Role::Admin)
+            ->where('is_active', true)
+            ->whereKeyNot($except->getKey())
+            ->exists();
+    }
+
     public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
     {
         $notification = new ResetPassword($token);

@@ -12,16 +12,17 @@
     </x-modal>
 
     size: sm | md (default) | lg | xl | 3xl.  open: start open (e.g. after a validation error).
+    close-href: for a modal with its own URL (e.g. /users/5/edit), closing goes back to this URL.
 --}}
-@props(['name', 'title', 'subtitle' => null, 'size' => 'md', 'open' => false, 'footer' => null])
+@props(['name', 'title', 'subtitle' => null, 'size' => 'md', 'open' => false, 'footer' => null, 'closeHref' => null])
 
 @php
     $width = ['sm' => 'max-w-sm', 'md' => 'max-w-md', 'lg' => 'max-w-lg', 'xl' => 'max-w-xl', '3xl' => 'max-w-3xl'][$size] ?? 'max-w-md';
     $titleId = 'modal-'.$name.'-title';
 @endphp
 
-<div x-data="modal" data-name="{{ $name }}" data-open="{{ $open ? 'true' : 'false' }}" x-on:open-modal.window="handleOpen">
-    <dialog x-ref="dialog" aria-labelledby="{{ $titleId }}"
+<div x-data="modal" data-name="{{ $name }}" data-open="{{ $open ? 'true' : 'false' }}" @if ($closeHref) data-close-href="{{ $closeHref }}" @endif x-on:open-modal.window="handleOpen">
+    <dialog x-ref="dialog" aria-labelledby="{{ $titleId }}" x-on:cancel="cancel"
             {{ $attributes->class(['m-auto w-[calc(100%-2rem)] rounded-2xl bg-white p-6 text-slate-900 shadow-2xl', $width]) }}>
         <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
             <div>
