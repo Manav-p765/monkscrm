@@ -111,10 +111,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Send the reset email after the HTTP response, so the forgot-password response
-     * time doesn't differ between existing and unknown email addresses.
-     */
-    /**
      * A new single-use set-password link (48 hours). Replaces any earlier invite link.
      * The raw token only exists in this URL; the database stores a hash.
      */
@@ -141,6 +137,10 @@ class User extends Authenticatable
             ->exists();
     }
 
+    /**
+     * Send the reset email after the HTTP response, so the forgot-password response
+     * time doesn't differ between existing and unknown email addresses.
+     */
     public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
     {
         $notification = new ResetPassword($token);

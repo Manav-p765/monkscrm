@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Lead;
 use App\Services\Leads\LeadDuplicates;
-use Illuminate\Http\Request;
+use App\Http\Requests\DuplicateCheckRequest;
 use Illuminate\Http\Response;
 
 /**
@@ -14,13 +14,9 @@ use Illuminate\Http\Response;
  */
 class LeadDuplicateCheckController extends Controller
 {
-    public function __invoke(Request $request, LeadDuplicates $duplicates): Response
+    public function __invoke(DuplicateCheckRequest $request, LeadDuplicates $duplicates): Response
     {
-        $data = $request->validate([
-            'email' => ['nullable', 'string', 'max:191'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'ignore' => ['nullable', 'string', 'max:20'],
-        ]);
+        $data = $request->validated();
 
         // Only compare against the lead being edited if the user can actually see it.
         $ignoreId = ! empty($data['ignore'])

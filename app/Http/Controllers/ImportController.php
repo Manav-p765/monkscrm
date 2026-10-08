@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ImportMappingRequest;
+use App\Http\Requests\ImportStrategyRequest;
 use App\Http\Requests\ImportUploadRequest;
 use App\Models\Import;
 use App\Services\Imports\LeadImporter;
@@ -13,7 +15,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -103,17 +104,11 @@ class ImportController extends Controller
         ]);
     }
 
-    public function mapping(Request $request, Import $import): RedirectResponse
+    public function mapping(ImportMappingRequest $request, Import $import): RedirectResponse
     {
         $this->authorizeImport($request, $import, ['mapping', 'validated', 'ready']);
         $headers = array_keys($import->column_mapping ?? []);
-
-        $data = $request->validate([
-            'mapping' => ['required', 'array'],
-            'mapping.*' => ['required', Rule::in(['none', ...array_keys(LeadImporter::FIELDS)])],
-            'unknown' => ['nullable', 'array'],
-            'unknown.*' => [Rule::in($request->user()->isAdmin() ? ['default', 'create', 'skip'] : ['default', 'skip'])],
-        ], ['unknown.*.in' => 'Only an admin can create new statuses, sources or tags during an import.']);
+        $data = $request->validated();
 
         $mapping = [];
         foreach ($headers as $i => $header) {
@@ -133,10 +128,10 @@ class ImportController extends Controller
         return redirect()->route('imports.show', [$import, 'step' => 'validate']);
     }
 
-    public function strategy(Request $request, Import $import): RedirectResponse
+    public function strategy(ImportStrategyRequest $request, Import $import): RedirectResponse
     {
         $this->authorizeImport($request, $import, ['validated', 'ready']);
-        $data = $request->validate(['strategy' => ['required', Rule::in(['skip', 'update', 'new'])]], ['strategy.*' => 'Choose how to handle duplicates.']);
+        $data = $request->validated();
 
         // Updating existing leads or importing duplicates as new is admin/manager only.
         if ($data['strategy'] !== 'skip' && ! Permissions::allows($request->user(), 'assign-leads')) {

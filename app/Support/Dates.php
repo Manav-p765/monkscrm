@@ -61,6 +61,12 @@ class Dates
         return Carbon::parse($value, self::zone())->utc();
     }
 
+    /** Midnight at the end of today in IST, as a UTC instant ("due today" = before this). */
+    public static function endOfToday(): Carbon
+    {
+        return self::fromInput(now(self::zone())->toDateString())->addDay();
+    }
+
     /** Value for an <input type="datetime-local"> showing a stored UTC time in IST. */
     public static function toInput(?DateTimeInterface $value): string
     {

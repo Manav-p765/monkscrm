@@ -6,8 +6,11 @@ use App\Enums\ActivityType;
 use App\Enums\LeadPriority;
 use App\Enums\LeadStatusType;
 use App\Enums\Currency;
+use App\Http\Requests\LeadAssigneeRequest;
 use App\Http\Requests\LeadListRequest;
+use App\Http\Requests\LeadPriorityRequest;
 use App\Http\Requests\LeadRequest;
+use App\Http\Requests\LeadStatusRequest;
 use App\Models\Lead;
 use App\Models\LeadSource;
 use App\Models\LeadStatus;
@@ -21,10 +24,8 @@ use App\Support\LeadFilters;
 use App\Support\LeadTimeline;
 use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -172,16 +173,10 @@ class LeadController extends Controller
     }
 
     /** Panel / pipeline status change. Answers 204 / 422 (plain text) to the pipeline's fetch. */
-    public function updateStatus(Request $request, Lead $lead)
+    public function updateStatus(LeadStatusRequest $request, Lead $lead)
     {
-        Gate::authorize('update', $lead);
-        $data = $request->validate([
-            'lead_status_id' => ['required', 'integer', Rule::exists('lead_statuses', 'id')->where('is_active', true)],
-            'via' => ['nullable', Rule::in(['panel', 'kanban'])],
-        ], ['lead_status_id.exists' => 'Choose an active status.']);
-
-        $status = LeadStatus::findOrFail($data['lead_status_id']);
-        $this->statuses->change($lead, $status, $request->user(), $data['via'] ?? 'panel');
+        $status = LeadStatus::findOrFail($request->validated('lead_status_id'));
+        $this->statuses->change($lead, $status, $request->user(), $request->validated('via') ?? 'panel');
 
         if ($request->header('X-Requested-With') === 'fetch') {
             return response()->noContent();
@@ -190,10 +185,9 @@ class LeadController extends Controller
         return back()->with('status', "Moved {$lead->displayName()} to {$status->name}");
     }
 
-    public function updateAssignee(Request $request, Lead $lead): RedirectResponse
+    public function updateAssignee(LeadAssigneeRequest $request, Lead $lead): RedirectResponse
     {
-        $data = $request->validate(['assigned_to' => ['nullable', 'integer', Rule::exists('users', 'id')->where('is_active', true)]]);
-        $to = ! empty($data['assigned_to']) ? User::find($data['assigned_to']) : null;
+        $to = $request->validated('assigned_to') ? User::find($request->validated('assigned_to')) : null;
         Gate::authorize('assign', [$lead, $to]);
 
         $this->assigner->assign($lead, $to, $request->user(), 'panel');
@@ -201,12 +195,9 @@ class LeadController extends Controller
         return back()->with('status', $to ? "Assigned to {$to->name}" : 'Lead unassigned');
     }
 
-    public function updatePriority(Request $request, Lead $lead): RedirectResponse
+    public function updatePriority(LeadPriorityRequest $request, Lead $lead): RedirectResponse
     {
-        Gate::authorize('update', $lead);
-        $data = $request->validate(['priority' => ['nullable', Rule::enum(LeadPriority::class)]]);
-
-        $lead->priority = $data['priority'] ?? null;
+        $lead->priority = $request->validated('priority');
         if ($lead->isDirty('priority')) {
             $lead->save();
             Audit::log('lead.updated', $lead, ['fields' => ['priority']]);

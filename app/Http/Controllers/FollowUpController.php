@@ -8,8 +8,8 @@ use App\Models\User;
 use App\Support\Dates;
 use App\Support\Permissions;
 use Illuminate\Http\RedirectResponse;
+use App\Http\Requests\FollowUpListRequest;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -21,18 +21,15 @@ class FollowUpController extends Controller
 {
     public const TABS = ['overdue' => 'Overdue', 'today' => 'Due Today', 'upcoming' => 'Upcoming', 'completed' => 'Completed History'];
 
-    public function index(Request $request): View
+    public function index(FollowUpListRequest $request): View
     {
         $user = $request->user();
         $canSeeAll = Permissions::allows($user, 'assign-leads');
-        $filters = $request->validate([
-            'tab' => ['nullable', Rule::in(array_keys(self::TABS))],
-            'assigned' => ['nullable', 'integer', Rule::exists('users', 'id')],
-        ]);
+        $filters = $request->validated();
         $tab = $filters['tab'] ?? 'overdue';
 
         $now = now();
-        $endOfToday = Dates::fromInput($now->copy()->setTimezone(Dates::zone())->toDateString())->addDay();
+        $endOfToday = Dates::endOfToday();
 
         $base = function () use ($user, $canSeeAll, $filters) {
             return FollowUp::query()->visibleTo($user)

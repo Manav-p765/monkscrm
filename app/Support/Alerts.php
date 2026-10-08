@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use App\Enums\FollowUpStatus;
-use App\Models\Activity;
 use App\Models\FollowUp;
 use App\Models\Lead;
 use App\Models\User;
@@ -24,7 +23,7 @@ class Alerts
     public static function for(User $user): array
     {
         $now = now();
-        $endOfToday = Dates::fromInput($now->copy()->setTimezone(Dates::zone())->toDateString())->addDay();
+        $endOfToday = Dates::endOfToday();
 
         $mine = fn () => FollowUp::query()->visibleTo($user)
             ->where('assigned_to', $user->id)->where('status', FollowUpStatus::Pending);

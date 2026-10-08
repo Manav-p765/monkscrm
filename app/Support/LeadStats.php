@@ -54,7 +54,7 @@ class LeadStats
         $default = (int) Settings::get('default_status_id');
 
         $now = now();
-        $endOfToday = Dates::fromInput($now->copy()->setTimezone(Dates::zone())->toDateString())->addDay();
+        $endOfToday = Dates::endOfToday();
         $followUps = $this->followUps()->where('status', FollowUpStatus::Pending)->toBase()
             ->selectRaw('sum(case when due_at < ? then 1 else 0 end) as overdue, sum(case when due_at >= ? and due_at < ? then 1 else 0 end) as today', [$now, $now, $endOfToday])
             ->first();

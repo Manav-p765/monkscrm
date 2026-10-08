@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LiveSearchRequest;
 use App\Models\Lead;
 use App\Support\LeadFilters;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
@@ -13,10 +13,9 @@ use Illuminate\Http\Response;
  */
 class LeadSearchController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(LiveSearchRequest $request): Response
     {
-        $data = $request->validate(['q' => ['nullable', 'string', 'max:100']]);
-        $term = trim((string) ($data['q'] ?? ''));
+        $term = $request->term();
 
         $leads = mb_strlen($term) < 2 ? collect() : LeadFilters::search(
             Lead::query()->visibleTo($request->user())->with('status:id,name,color'),

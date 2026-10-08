@@ -7,7 +7,7 @@ use App\Support\Csv;
 use App\Support\Dates;
 use App\Support\LeadStats;
 use App\Support\Money;
-use Illuminate\Http\Request;
+use App\Http\Requests\ReportFilterRequest;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ReportController extends Controller
 {
-    public function index(Request $request): View
+    public function index(ReportFilterRequest $request): View
     {
         [$filters, $stats] = $this->stats($request);
 
@@ -35,7 +35,7 @@ class ReportController extends Controller
         ]);
     }
 
-    public function export(Request $request): StreamedResponse
+    public function export(ReportFilterRequest $request): StreamedResponse
     {
         [$filters, $stats] = $this->stats($request);
         Audit::log('report.exported', null, ['from' => $filters['from'], 'to' => $filters['to']]);
@@ -72,18 +72,9 @@ class ReportController extends Controller
     }
 
     /** @return array{0: array{from: string, to: string}, 1: LeadStats} */
-    private function stats(Request $request): array
+    private function stats(ReportFilterRequest $request): array
     {
-        $today = now(Dates::zone())->toDateString();
-        $data = $request->validate([
-            'from' => ['nullable', 'date_format:Y-m-d'],
-            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
-        ], ['to.after_or_equal' => 'The end date must be on or after the start date.']);
-
-        $filters = [
-            'from' => $data['from'] ?? now(Dates::zone())->subDays(29)->toDateString(),
-            'to' => $data['to'] ?? $today,
-        ];
+        $filters = $request->range();
 
         return [$filters, new LeadStats($request->user(), Dates::fromInput($filters['from']), Dates::fromInput($filters['to'])->addDay())];
     }

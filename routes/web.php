@@ -12,7 +12,6 @@ use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadDuplicateCheckController;
 use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\PipelineController;
-use App\Http\Controllers\PlaceholderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Settings\LeadSourceController;

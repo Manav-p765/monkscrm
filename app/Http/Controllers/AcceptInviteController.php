@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\Fortify\PasswordValidationRules;
+use App\Http\Requests\AcceptInviteRequest;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
@@ -18,23 +18,13 @@ use Illuminate\View\View;
  */
 class AcceptInviteController extends Controller
 {
-    use PasswordValidationRules;
-
     public function show(Request $request, string $token): View
     {
         return view('auth.accept-invite', ['token' => $token, 'email' => (string) $request->query('email')]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(AcceptInviteRequest $request): RedirectResponse
     {
-        $request->validate([
-            'token' => ['required', 'string'],
-            'email' => ['required', 'email'],
-            'password' => $this->passwordRules(),
-        ], [
-            'password.confirmed' => 'The two passwords don’t match. Type the same password twice.',
-        ]);
-
         $status = Password::broker('invites')->reset(
             [...$request->only('email', 'password', 'password_confirmation', 'token'), 'email' => Str::lower((string) $request->input('email'))],
             function (User $user, string $password) {

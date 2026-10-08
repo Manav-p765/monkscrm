@@ -4,7 +4,6 @@ namespace App\Support;
 
 use App\Enums\Currency;
 use App\Enums\LeadPriority;
-use App\Models\Concerns\Searchable;
 use App\Models\Lead;
 use App\Models\LeadStatus;
 use App\Models\User;
@@ -74,7 +73,7 @@ class LeadFilters
         match ($f['quick'] ?? 'all') {
             'mine' => $query->where('assigned_to', $user->id),
             'due' => $query->whereNotNull('next_follow_up_at')
-                ->where('next_follow_up_at', '<', Dates::fromInput(now(Dates::zone())->toDateString())->addDay()),
+                ->where('next_follow_up_at', '<', Dates::endOfToday()),
             'unassigned' => $query->whereNull('assigned_to'),
             'urgent' => $query->whereIn('priority', [LeadPriority::Urgent->value, LeadPriority::High->value]),
             default => null,
@@ -113,20 +112,13 @@ class LeadFilters
     public static function search(Builder $query, ?string $term): Builder
     {
         $words = preg_split('/\s+/', trim((string) $term), -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        $driver = $query->getConnection()->getDriverName();
 
         foreach (array_slice($words, 0, 6) as $word) {
-            $pattern = '%'.Searchable::escapeLike($word, $driver).'%';
             $digits = preg_replace('/\D+/', '', $word);
 
-            $query->where(function (Builder $q) use ($pattern, $digits) {
-                foreach (['first_name', 'last_name', 'company', 'email', 'secondary_email', 'reference'] as $column) {
-                    $q->orWhereLike($column, $pattern);
-                }
-                if (strlen($digits) >= 3) {
-                    $q->orWhere('phone_normalized', 'like', "%{$digits}%");
-                }
-            });
+            $query->where(fn (Builder $q) => $q
+                ->search($word, ['first_name', 'last_name', 'company', 'email', 'secondary_email', 'reference'])
+                ->when(strlen($digits) >= 3, fn ($q) => $q->orWhere(fn ($p) => $p->search($digits, ['phone_normalized']))));
         }
 
         return $query;
