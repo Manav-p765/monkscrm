@@ -27,6 +27,7 @@ class AccessControlTest extends TestCase
         'two-factor.login.store',
         'invite.show',
         'invite.store',
+        'healthz',
     ];
 
     public function test_every_non_public_route_requires_authentication(): void

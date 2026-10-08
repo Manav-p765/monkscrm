@@ -229,7 +229,7 @@ class SecurityReviewTest extends TestCase
             ->map(fn (Route $r) => $r->uri())->sort()->values()->all();
 
         // Each of these only reads. A new GET route must be reviewed (no state changes on GET) and added here.
-        $reviewed = ['audit-log', 'audit-log/{auditLog}', 'dashboard', 'follow-ups', 'forgot-password', 'imports',
+        $reviewed = ['audit-log', 'audit-log/{auditLog}', 'dashboard', 'follow-ups', 'forgot-password', 'healthz', 'imports',
             'imports/template.csv', 'imports/{import}', 'imports/{import}/errors.csv', 'invite/{token}', 'leads', 'leads-export',
             'leads/create', 'leads/duplicate-check', 'leads/live-search', 'leads/{lead}', 'leads/{lead}/edit', 'login', 'pipeline',
             'profile', 'reports', 'reports/export', 'reset-password/{token}', 'settings', 'settings/general', 'settings/permissions',

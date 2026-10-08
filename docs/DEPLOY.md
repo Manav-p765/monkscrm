@@ -95,5 +95,5 @@ The error names the setting, never its value (`App\Support\ProductionGuard`).
    The app starts without tables but pages fail until this is done.
 4. The same script offers `crm:create-admin` on the first run: create your admin.
 5. Sign in, set up two-step sign-in (required for admins), invite a second admin.
-6. Check email: `php artisan crm:mail-test you@hybridmonks.com` (RUNBOOK.md, "Check email").
+6. Check email: `scripts\production-artisan.ps1 crm:mail-test you@hybridmonks.com` (RUNBOOK.md, "Check email").
 7. Set up backups (GitHub secrets, `.github/workflows/backup.yml`) and monitoring (RUNBOOK.md).

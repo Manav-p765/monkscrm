@@ -12,5 +12,7 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan event:cache
+# Lucide SVG lookup manifest (blade-icons): avoids scanning the icon directory on every render.
+php artisan icons:cache
 
 exec frankenphp run --config /etc/frankenphp/Caddyfile

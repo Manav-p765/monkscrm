@@ -58,6 +58,7 @@ return [
         'user.password_reset_link_sent' => 'Sent a password reset link',
         'user.two_factor_reset_by_admin' => 'Turned off a user’s two-step sign-in',
         'user.sessions_revoked' => 'Signed a user out everywhere',
+        'mail.test_sent' => 'Sent a test email (crm:mail-test)',
         'team.created' => 'Added a team',
         'team.updated' => 'Renamed a team',
         'lead.created' => 'Created a lead',
