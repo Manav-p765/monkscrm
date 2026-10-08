@@ -338,7 +338,9 @@ class LeadImporter
 
     private function createLead(Import $import, array $fields, User $importer): void
     {
-        $lead = new Lead(collect($fields)->except(['tags', 'deal_value', 'assigned_to', 'status_id', 'source_id'])->all());
+        // Only real lead columns (mapRow also returns internal flags like status_explicit), so this
+        // never depends on mass-assignment protection being on (it's off in seeders and tinker).
+        $lead = new Lead(collect($fields)->only(array_diff((new Lead)->getFillable(), ['deal_value']))->all());
         $lead->lead_status_id = $fields['status_id'];
         $lead->lead_source_id = $fields['source_id'];
         $lead->deal_value = $fields['deal_value'] ?? null;
@@ -367,7 +369,7 @@ class LeadImporter
     /** Update: only fields that have a value in the file; status/assignee through the services. */
     private function updateLead(Lead $lead, array $fields, User $importer): void
     {
-        $plain = collect($fields)->except(['tags', 'deal_value', 'assigned_to', 'status_id', 'source_id', 'currency'])
+        $plain = collect($fields)->only(array_diff($lead->getFillable(), ['deal_value', 'currency', 'lead_source_id']))
             ->filter(fn ($v) => $v !== null && $v !== '')->all();
         $lead->fill($plain);
         if (isset($fields['deal_value'])) {
