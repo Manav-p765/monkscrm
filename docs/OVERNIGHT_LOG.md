@@ -23,7 +23,7 @@ _(written at the end of the night)_
 | Step | Status | Notes |
 |---|---|---|
 | 2 | Done | See "Step 2 report" below. SQLite 124 + 1 skipped, Postgres 125/125. |
-| 3 | Not started | |
+| 3 | Done | Leads core, panel, bulk, Kanban, perf. SQLite 144 + 1 skipped, Postgres 145/145. |
 | 4 | Not started | |
 | 5 | Not started | |
 | 6 | Not started | |
@@ -61,6 +61,23 @@ prototype font, self-hosted and bundled by Vite so the CSP stays 'self').
 Sign In / Create Admin tab switcher (self-signup is excluded); required fields show "*" where the
 prototype login doesn't; avatars are initials, not photos; New Lead / Add Lead buttons and sidebar
 counts appear in Step 3/4; settings tabs use the bordered pill style of the quick filters.
+
+## Step 3 report
+
+**Commits:** `aa2a05a` sections 3.1–3.10 (one commit: the sections share the same controller/views) ·
+3.11 performance (this commit).
+
+**Performance (3.11), 20,000 fake leads (`PerformanceSeeder`), local Postgres, `php artisan serve`,
+APP_DEBUG on, median of 3:** list 0.33–0.51 s, search page 0.41–0.45 s, as-you-type search 0.19–0.22 s,
+pipeline 1.0–1.2 s, dashboard 0.13–0.24 s. These include the single-threaded dev server and debug mode,
+so they're upper bounds; no extra indexes or pg_trgm were needed for the ~300 ms goal on list and search.
+Fixes made: OPcache enabled in the local PHP; Kanban cards rendered without nested components (was 25 s);
+settings memoized per request (was 1,200 cache-store reads on a Sales pipeline).
+
+**Decisions:** duplicates are checked against all non-archived leads (to block them) but only leads the
+user can see are named; secondary email/phone are searched but not used for duplicate matching; Kanban
+column totals don't update live after a drag (counts do); quick actions in the panel are disabled until
+Step 4; My Profile name/phone editing still pending.
 
 ## Decisions made overnight
 

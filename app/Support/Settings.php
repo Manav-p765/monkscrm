@@ -14,10 +14,23 @@ class Settings
 {
     public const CACHE_KEY = 'crm.settings';
 
-    /** @return array<string, mixed> */
+    /**
+     * Memoized for the current request on the app container (a fresh container per request and per
+     * test), so checks like Lead::isVisibleTo() in a loop don't hit the cache store every time.
+     *
+     * @return array<string, mixed>
+     */
     public static function all(): array
     {
-        return Cache::rememberForever(self::CACHE_KEY, fn () => Setting::query()->pluck('value', 'key')->all());
+        $app = app();
+        if ($app->bound(self::CACHE_KEY)) {
+            return $app->make(self::CACHE_KEY);
+        }
+
+        $all = Cache::rememberForever(self::CACHE_KEY, fn () => Setting::query()->pluck('value', 'key')->all());
+        $app->instance(self::CACHE_KEY, $all);
+
+        return $all;
     }
 
     public static function get(string $key, mixed $default = null): mixed
@@ -58,5 +71,6 @@ class Settings
     public static function flush(): void
     {
         Cache::forget(self::CACHE_KEY);
+        app()->forgetInstance(self::CACHE_KEY);
     }
 }
