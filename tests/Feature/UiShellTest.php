@@ -22,7 +22,7 @@ class UiShellTest extends TestCase
 
         $this->actingAs(User::factory()->create())->get('/leads')
             ->assertOk()
-            ->assertSee('<title>Leads · Renamed CRM</title>', false);
+            ->assertSee('<title>Lead Directory · Renamed CRM</title>', false);
     }
 
     public function test_default_product_name_is_monks_crm(): void

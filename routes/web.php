@@ -3,6 +3,11 @@
 use App\Http\Controllers\AcceptInviteController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LeadBulkController;
+use App\Http\Controllers\LeadController;
+use App\Http\Controllers\LeadDuplicateCheckController;
+use App\Http\Controllers\LeadSearchController;
+use App\Http\Controllers\PipelineController;
 use App\Http\Controllers\PlaceholderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Settings\LeadSourceController;
@@ -32,16 +37,27 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
 
-    // Placeholders for sections built in later steps.
-    Route::get('/leads', PlaceholderController::class)
-        ->defaults('section', 'Leads')
-        ->middleware('can:viewAny,'.Lead::class)
-        ->name('leads.index');
+    // Leads. {lead} binds by reference through Lead::visibleTo(): invisible leads are 404.
+    Route::middleware('can:viewAny,'.Lead::class)->group(function () {
+        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
+        Route::get('/leads/create', [LeadController::class, 'create'])->name('leads.create');
+        Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
+        Route::post('/leads/bulk', LeadBulkController::class)->name('leads.bulk');
+        Route::middleware('throttle:live')->group(function () {
+            Route::get('/leads/live-search', LeadSearchController::class)->name('leads.live-search');
+            Route::get('/leads/duplicate-check', LeadDuplicateCheckController::class)->name('leads.duplicate-check');
+        });
+        Route::get('/leads/{lead}', [LeadController::class, 'show'])->name('leads.show');
+        Route::get('/leads/{lead}/edit', [LeadController::class, 'edit'])->name('leads.edit');
+        Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
+        Route::patch('/leads/{lead}/status', [LeadController::class, 'updateStatus'])->name('leads.status');
+        Route::patch('/leads/{lead}/assignee', [LeadController::class, 'updateAssignee'])->name('leads.assignee');
+        Route::patch('/leads/{lead}/priority', [LeadController::class, 'updatePriority'])->name('leads.priority');
+        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
+        Route::post('/leads/{lead}/restore', [LeadController::class, 'restore'])->withTrashed()->name('leads.restore');
 
-    Route::get('/pipeline', PlaceholderController::class)
-        ->defaults('section', 'Pipeline')
-        ->middleware('can:viewAny,'.Lead::class)
-        ->name('pipeline.index');
+        Route::get('/pipeline', PipelineController::class)->name('pipeline.index');
+    });
 
     Route::get('/follow-ups', PlaceholderController::class)
         ->defaults('section', 'Follow-Ups')

@@ -2,7 +2,7 @@
     <x-select name="lead_status_id" label="Lead Status" :options="[id => name, ...]" placeholder="Unassigned" required />
 --}}
 @props(['name', 'label', 'options' => [], 'value' => null, 'placeholder' => null, 'required' => false, 'hint' => null,
-    'bag' => 'default', 'id' => null, 'size' => 'md', 'aside' => null])
+    'bag' => 'default', 'id' => null, 'size' => 'md', 'labelHidden' => null, 'aside' => null])
 
 @php
     $key = str_replace(['[]', '[', ']'], ['', '.', ''], $name);
@@ -12,7 +12,7 @@
     $current = (string) old($key, $value instanceof \BackedEnum ? $value->value : $value);
 @endphp
 
-<x-field :id="$id" :label="$label" :required="$required" :hint="$hint" :error="$error" :aside="$aside" :label-hidden="$size === 'filter'">
+<x-field :id="$id" :label="$label" :required="$required" :hint="$hint" :error="$error" :aside="$aside" :label-hidden="$labelHidden ?? $size === 'filter'">
     <select id="{{ $id }}" name="{{ $name }}"
             @if ($required) required @endif
             @if ($error) aria-invalid="true" @endif

@@ -17,9 +17,47 @@ Alpine.data('sidebar', () => ({
     },
 }));
 
-// Header search: "/" focuses it (unless you are typing in a field), Escape leaves it.
-// Enter submits to the Leads list; live results come with the leads list (step 3).
+// GET a server-rendered HTML fragment (never JSON). Same-origin, session cookie, no caching.
+async function fetchFragment(url) {
+    const response = await fetch(url, {
+        headers: { Accept: 'text/html', 'X-Requested-With': 'fetch' },
+        credentials: 'same-origin',
+        cache: 'no-store',
+    });
+    if (!response.ok) {
+        throw new Error(String(response.status));
+    }
+    return response.text();
+}
+
+// Header search: "/" focuses it (unless you are typing in a field), Escape leaves it. Typing 2+
+// characters shows up to 8 matching leads (fragment from /leads/live-search); Enter opens the full list.
 Alpine.data('globalSearch', () => ({
+    open: false,
+    async lookup() {
+        const term = this.$refs.input.value.trim();
+        if (term.length < 2) {
+            this.open = false;
+            return;
+        }
+        try {
+            const html = await fetchFragment(this.$el.dataset.liveUrl + '?q=' + encodeURIComponent(term));
+            if (this.$refs.input.value.trim() === term) {
+                this.$refs.results.innerHTML = html;
+                this.open = true;
+            }
+        } catch {
+            this.open = false;
+        }
+    },
+    reopen() {
+        if (this.$refs.input.value.trim().length >= 2 && this.$refs.results.innerHTML !== '') {
+            this.open = true;
+        }
+    },
+    close() {
+        this.open = false;
+    },
     shortcut(event) {
         if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) {
             return;
@@ -33,7 +71,128 @@ Alpine.data('globalSearch', () => ({
         this.$refs.input.focus();
     },
     blur() {
+        this.open = false;
         this.$refs.input.blur();
+    },
+}));
+
+// Lead form: warns about a possible duplicate (email/phone) while typing. The server decides what
+// may be shown: details only for a lead the user can see.
+Alpine.data('duplicateCheck', () => ({
+    async check() {
+        const form = this.$el.closest('form') || this.$el;
+        const email = form.querySelector('[name="email"]').value.trim();
+        const phone = form.querySelector('[name="phone"]').value.trim();
+        if (email.length < 2 && phone.replace(/\D/g, '').length < 6) {
+            this.$refs.warning.innerHTML = '';
+            return;
+        }
+        const params = new URLSearchParams({ email, phone, ignore: form.dataset.ignore || '' });
+        try {
+            this.$refs.warning.innerHTML = await fetchFragment(form.dataset.url + '?' + params.toString());
+        } catch {
+            // The check is a convenience; saving re-checks on the server anyway.
+        }
+    },
+}));
+
+// Pipeline (Kanban): native HTML5 drag-and-drop. A drop moves the card at once, then asks the server
+// (PATCH /leads/{ref}/status, LeadStatusChanger); if the server refuses, the card goes back.
+// Each card also has a keyboard-accessible "Move to…" menu (plain forms).
+Alpine.data('kanban', () => ({
+    dragged: null,
+    origin: null,
+    next: null,
+    overColumn: null,
+    message: '',
+    ok: true,
+    start(event) {
+        this.dragged = event.currentTarget;
+        this.origin = this.dragged.parentNode;
+        this.next = this.dragged.nextSibling;
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', this.dragged.dataset.ref);
+        requestAnimationFrame(() => this.dragged && this.dragged.classList.add('opacity-40'));
+    },
+    end() {
+        if (this.dragged) {
+            this.dragged.classList.remove('opacity-40');
+        }
+        this.clearOver();
+        this.dragged = null;
+    },
+    over(event) {
+        event.preventDefault();
+        const column = event.currentTarget;
+        if (this.overColumn !== column) {
+            this.clearOver();
+            this.overColumn = column;
+            column.classList.add('ring-2', 'ring-indigo-400/30', 'border-indigo-400', 'bg-indigo-50/70');
+        }
+    },
+    clearOver() {
+        if (this.overColumn) {
+            this.overColumn.classList.remove('ring-2', 'ring-indigo-400/30', 'border-indigo-400', 'bg-indigo-50/70');
+            this.overColumn = null;
+        }
+    },
+    async drop(event) {
+        event.preventDefault();
+        const column = event.currentTarget;
+        const card = this.dragged;
+        this.clearOver();
+        if (!card || column.dataset.status === card.dataset.status) {
+            return;
+        }
+        const from = this.origin;
+        const next = this.next;
+        const fromColumn = from.closest('[data-status]');
+        column.querySelector('[data-cards]').prepend(card);
+        this.adjust(fromColumn, -1);
+        this.adjust(column, 1);
+
+        const body = new URLSearchParams({
+            _method: 'PATCH',
+            _token: document.querySelector('meta[name="csrf-token"]').content,
+            lead_status_id: column.dataset.status,
+            via: 'kanban',
+        });
+        try {
+            const response = await fetch(card.dataset.url, {
+                method: 'POST',
+                headers: { Accept: 'text/plain', 'X-Requested-With': 'fetch' },
+                credentials: 'same-origin',
+                body,
+            });
+            if (!response.ok) {
+                throw new Error(String(response.status));
+            }
+            card.dataset.status = column.dataset.status;
+            this.toast(true, 'Moved ' + card.dataset.name + ' to ' + column.dataset.name);
+        } catch {
+            from.insertBefore(card, next);
+            this.adjust(fromColumn, 1);
+            this.adjust(column, -1);
+            this.toast(false, 'Could not move ' + card.dataset.name + '. It may have changed or you may not have access. Refresh and try again.');
+        }
+    },
+    adjust(column, delta) {
+        const badge = column.querySelector('[data-count]');
+        badge.textContent = String(Math.max(0, parseInt(badge.textContent, 10) + delta));
+    },
+    toast(ok, message) {
+        this.ok = ok;
+        this.message = message;
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => (this.message = ''), ok ? 3000 : 6000);
+    },
+    get showToast() {
+        return this.message !== '';
+    },
+    get toastClasses() {
+        return this.ok
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+            : 'border-rose-200 bg-rose-50 text-rose-700';
     },
 }));
 
@@ -217,6 +376,37 @@ Alpine.data('sortable', () => ({
         });
         document.body.append(form);
         form.submit();
+    },
+}));
+
+// Lead list selection: row checkboxes (name="ids[]", form="bulk-form") drive the bulk action bar.
+Alpine.data('bulkSelect', () => ({
+    count: 0,
+    total: 0,
+    init() {
+        this.update();
+    },
+    boxes() {
+        return Array.from(this.$root.querySelectorAll('input[name="ids[]"]'));
+    },
+    update() {
+        const boxes = this.boxes();
+        this.total = boxes.length;
+        this.count = boxes.filter((b) => b.checked).length;
+    },
+    toggleAll(event) {
+        this.boxes().forEach((b) => (b.checked = event.target.checked));
+        this.update();
+    },
+    clear() {
+        this.boxes().forEach((b) => (b.checked = false));
+        this.update();
+    },
+    get any() {
+        return this.count > 0;
+    },
+    get allChecked() {
+        return this.total > 0 && this.count === this.total;
     },
 }));
 

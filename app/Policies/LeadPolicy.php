@@ -4,67 +4,86 @@ namespace App\Policies;
 
 use App\Models\Lead;
 use App\Models\User;
+use App\Support\Permissions;
+use App\Support\Settings;
 
 /**
- * STUB (step 1). Full rules are implemented in step 3, together with the lead
- * visibility scope. Until then everything except viewAny is denied.
+ * Lead rules. Visibility itself is Lead::visibleTo() / Lead::isVisibleTo(); a lead the user can't
+ * see never even resolves (404). These methods add what a user may DO with leads they can see.
  */
 class LeadPolicy
 {
-    /**
-     * TODO(step 3): any active user may open the leads list; rows are limited by the visibility scope.
-     */
+    /** Anyone active may open the list; rows are limited by the visibility scope. */
     public function viewAny(User $user): bool
     {
-        return true;
+        return Permissions::allows($user, 'view-leads');
     }
 
-    /**
-     * TODO(step 3): admin/manager: any lead. Sales: leads assigned to or created by them,
-     * or all leads when the sales_can_view_all_leads setting is on.
-     */
     public function view(User $user, Lead $lead): bool
     {
-        return false;
+        return $lead->isVisibleTo($user);
     }
 
-    /**
-     * TODO(step 3): all roles may create leads.
-     */
     public function create(User $user): bool
     {
-        return false;
+        return Permissions::allows($user, 'edit-leads');
     }
 
-    /**
-     * TODO(step 3): admin/manager: any lead. Sales: only leads they can view and are assigned to.
-     */
+    /** Edit fields and change status on leads you can see. */
     public function update(User $user, Lead $lead): bool
     {
-        return false;
+        return Permissions::allows($user, 'edit-leads') && $lead->isVisibleTo($user) && ! $lead->trashed();
     }
 
     /**
-     * TODO(step 3): archive (soft delete). Admin/manager only.
+     * Admins and managers assign to anyone; sales may only assign a lead they can edit to themselves.
+     * $to = null means "unassigned" (admins and managers only).
      */
-    public function delete(User $user, Lead $lead): bool
+    public function assign(User $user, Lead $lead, ?User $to = null): bool
     {
-        return false;
+        if (! $this->update($user, $lead)) {
+            return false;
+        }
+        if (Permissions::allows($user, 'assign-leads')) {
+            return $to === null || $to->is_active;
+        }
+
+        return $to !== null && $to->is($user);
     }
 
-    /**
-     * TODO(step 3): change assigned_to. Admin/manager only.
-     */
-    public function assign(User $user, Lead $lead): bool
+    /** Pick an assignee on the create form (same rule, before the lead exists). */
+    public function assignTo(User $user, ?User $to): bool
     {
-        return false;
+        if (Permissions::allows($user, 'assign-leads')) {
+            return $to === null || $to->is_active;
+        }
+
+        return $to !== null && $to->is($user);
     }
 
-    /**
-     * TODO(step 3/6): mirrors the export-leads gate (admin, manager).
-     */
+    public function archive(User $user, Lead $lead): bool
+    {
+        return Permissions::allows($user, 'archive-leads') && ! $lead->trashed();
+    }
+
+    public function restore(User $user, Lead $lead): bool
+    {
+        return Permissions::allows($user, 'archive-leads') && $lead->trashed();
+    }
+
+    public function viewArchived(User $user): bool
+    {
+        return Permissions::allows($user, 'archive-leads');
+    }
+
+    /** Save despite a possible duplicate: admins/managers, and only while the setting allows it. */
+    public function overrideDuplicate(User $user): bool
+    {
+        return Permissions::allows($user, 'save-duplicates') && (bool) Settings::get('allow_duplicate_override', true);
+    }
+
     public function export(User $user): bool
     {
-        return false;
+        return Permissions::allows($user, 'export-leads');
     }
 }

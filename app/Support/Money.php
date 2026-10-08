@@ -74,6 +74,40 @@ class Money
         return $totals;
     }
 
+    /**
+     * What a person typed ("25000", "2,50,000.50", "$1,234.5") → minor units. Null for empty input.
+     * Returns false when it isn't a valid non-negative amount with at most two decimals.
+     */
+    public static function parse(?string $input, Currency|string $currency): int|false|null
+    {
+        $currency = $currency instanceof Currency ? $currency : Currency::from($currency);
+        $clean = preg_replace('/[\s,]/u', '', str_replace($currency->symbol(), '', trim((string) $input)));
+
+        if ($clean === '') {
+            return null;
+        }
+        if (! preg_match('/^\d{1,13}(\.\d{1,2})?$/', $clean)) {
+            return false;
+        }
+
+        [$whole, $fraction] = array_pad(explode('.', $clean), 2, '');
+
+        return (int) $whole * 10 ** $currency->minorUnits() + (int) str_pad($fraction, $currency->minorUnits(), '0');
+    }
+
+    /** Minor units → the plain number to put back in a form field ("250000.5" style, no grouping). */
+    public static function toInput(?int $minor, Currency|string|null $currency): string
+    {
+        if ($minor === null || $currency === null) {
+            return '';
+        }
+        $currency = $currency instanceof Currency ? $currency : Currency::from($currency);
+        $factor = 10 ** $currency->minorUnits();
+        $fraction = $minor % $factor;
+
+        return intdiv($minor, $factor).($fraction ? '.'.str_pad((string) $fraction, $currency->minorUnits(), '0', STR_PAD_LEFT) : '');
+    }
+
     /** Indian grouping: last three digits, then pairs (1234567 → 12,34,567). */
     private static function groupIndian(string $digits): string
     {

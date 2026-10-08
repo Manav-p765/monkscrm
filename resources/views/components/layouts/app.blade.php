@@ -14,7 +14,7 @@
 
 @php
     $user = auth()->user();
-    $maxWidth = ['5xl' => 'max-w-5xl', '6xl' => 'max-w-6xl', '7xl' => 'max-w-7xl'][$width] ?? 'max-w-7xl';
+    $maxWidth = ['5xl' => 'max-w-5xl', '6xl' => 'max-w-6xl', '7xl' => 'max-w-7xl', 'full' => 'max-w-none'][$width] ?? 'max-w-7xl';
     $canCreateLead = $user->can('create', App\Models\Lead::class);
 @endphp
 
@@ -111,14 +111,18 @@
 
                 @can('viewAny', App\Models\Lead::class)
                     <form method="GET" action="{{ route('leads.index') }}" role="search" x-data="globalSearch"
+                          data-live-url="{{ route('leads.live-search') }}" x-on:click.outside="close"
                           x-on:keydown.window="shortcut" class="relative w-full max-w-md">
                         <label for="global-search" class="sr-only">Search leads</label>
                         <x-lucide-search class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
                         <input id="global-search" x-ref="input" type="search" name="q" value="{{ request()->routeIs('leads.index') ? request('q') : '' }}"
-                               x-on:keydown.escape="blur" autocomplete="off"
+                               x-on:keydown.escape="blur" x-on:input.debounce.250ms="lookup" x-on:focus="reopen" autocomplete="off"
+                               aria-controls="global-search-results" x-bind:aria-expanded="open"
                                placeholder="Search leads by name, company, email, phone, ID… (Press '/')"
                                class="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-12 pl-9 text-xs transition-all placeholder:text-slate-500 hover:bg-slate-100/70 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:outline-none">
                         <kbd class="absolute top-1/2 right-3 -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-3xs text-slate-500 shadow-2xs" aria-hidden="true">/</kbd>
+                        <div id="global-search-results" x-ref="results" x-cloak x-show="open" aria-live="polite"
+                             class="absolute top-full right-0 left-0 z-50 mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"></div>
                     </form>
                 @endcan
             </div>

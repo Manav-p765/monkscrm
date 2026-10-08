@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Support\Permissions;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
@@ -36,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
             ->uncompromised());
 
         $this->defineGates();
+
+        // As-you-type endpoints (header search, duplicate check): 60 requests a minute per user.
+        RateLimiter::for('live', fn (Request $request) => Limit::perMinute(60)->by('live:'.($request->user()?->id ?? $request->ip())));
     }
 
     /**

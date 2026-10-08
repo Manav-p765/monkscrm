@@ -5,7 +5,9 @@ namespace App\Models;
 use App\Enums\Currency;
 use App\Enums\LeadPriority;
 use App\Models\Concerns\Searchable;
+use App\Support\Settings;
 use Database\Factories\LeadFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,8 +17,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use LogicException;
 
 /**
- * NOTE: never query leads directly (e.g. Lead::all()). All lead queries must go
- * through the visibility scope added in step 3.
+ * NOTE: never query leads directly (e.g. Lead::all()). Every lead query a person can trigger
+ * goes through Lead::visibleTo($user) (see scopeVisibleTo).
  */
 class Lead extends Model
 {
@@ -98,6 +100,76 @@ class Lead extends Model
         });
     }
 
+    /**
+     * THE lead visibility rule (CLAUDE.md rule 2). Every lead query a person can trigger goes through
+     * this: lists, search, counts, dashboard, kanban, reports, duplicate checks, exports, dropdowns.
+     * Admin and manager: all leads (teams don't limit visibility). Sales: leads assigned to them, plus
+     * unassigned leads if `sales_can_view_unassigned`, plus everything if `sales_can_view_all_leads`.
+     */
+    public function scopeVisibleTo(Builder $query, User $user): void
+    {
+        if (! $user->is_active) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        if ($user->isAdmin() || $user->isManager() || Settings::get('sales_can_view_all_leads', false)) {
+            return;
+        }
+
+        $query->where(function (Builder $q) use ($user) {
+            $q->where('assigned_to', $user->id);
+            if (Settings::get('sales_can_view_unassigned', true)) {
+                $q->orWhereNull('assigned_to');
+            }
+        });
+    }
+
+    /** Same rule as scopeVisibleTo() for an already-loaded lead. */
+    public function isVisibleTo(User $user): bool
+    {
+        if (! $user->is_active) {
+            return false;
+        }
+        if ($user->isAdmin() || $user->isManager() || Settings::get('sales_can_view_all_leads', false)) {
+            return true;
+        }
+
+        return $this->assigned_to === $user->id
+            || ($this->assigned_to === null && Settings::get('sales_can_view_unassigned', true));
+    }
+
+    /** URLs use the public reference (/leads/LD-000123). */
+    public function getRouteKeyName(): string
+    {
+        return 'reference';
+    }
+
+    /**
+     * A lead outside the signed-in user's visibility is a 404 (never a 403), so its existence isn't
+     * revealed. Archived leads resolve only on routes that ask for them (->withTrashed()).
+     */
+    public function resolveRouteBinding($value, $field = null): ?self
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return null;
+        }
+
+        return static::query()->visibleTo($user)->where($field ?? 'reference', $value)->first();
+    }
+
+    public function resolveSoftDeletableRouteBinding($value, $field = null): ?self
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return null;
+        }
+
+        return static::withTrashed()->visibleTo($user)->where($field ?? 'reference', $value)->first();
+    }
+
     public static function formatReference(int $id): string
     {
         return 'LD-'.str_pad((string) $id, 6, '0', STR_PAD_LEFT);
@@ -120,6 +192,12 @@ class Lead extends Model
     public function fullName(): string
     {
         return trim($this->first_name.' '.$this->last_name);
+    }
+
+    /** What to call the lead in lists and messages: the person, else the company, else the reference. */
+    public function displayName(): string
+    {
+        return $this->fullName() ?: ($this->company ?: (string) $this->reference);
     }
 
     public function status(): BelongsTo
