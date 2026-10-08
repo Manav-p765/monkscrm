@@ -12,6 +12,7 @@ use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\PipelineController;
 use App\Http\Controllers\PlaceholderController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Settings\LeadSourceController;
 use App\Http\Controllers\Settings\LeadStatusController;
 use App\Http\Controllers\Settings\SettingsController;
@@ -77,10 +78,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:import-leads')
         ->name('imports.index');
 
-    Route::get('/reports', PlaceholderController::class)
-        ->defaults('section', 'Reports')
-        ->middleware('can:view-reports')
-        ->name('reports.index');
+    Route::middleware('can:view-reports')->group(function () {
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/export', [ReportController::class, 'export'])->middleware('throttle:10,60')->name('reports.export');
+    });
 
     // Users & Teams: managers get the read-only list; every change needs manage-users (UserPolicy).
     Route::middleware('can:view-users')->group(function () {

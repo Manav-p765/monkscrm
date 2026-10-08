@@ -54,9 +54,10 @@ class Money
      *
      * @return array<string, int> currency code => minor units, in the fixed currency order
      */
-    public static function totals(Builder $leads): array
+    public static function totals(?Builder $leads, array $sums = []): array
     {
-        $sums = (clone $leads)
+        // Either sum a (visibility-scoped) lead query, or tidy sums already grouped by currency.
+        $sums = $leads === null ? $sums : (clone $leads)
             ->toBase()
             ->reorder()
             ->whereNotNull('deal_value')

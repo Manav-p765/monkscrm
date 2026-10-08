@@ -25,7 +25,7 @@ _(written at the end of the night)_
 | 2 | Done | See "Step 2 report" below. SQLite 124 + 1 skipped, Postgres 125/125. |
 | 3 | Done | Leads core, panel, bulk, Kanban, perf. SQLite 144 + 1 skipped, Postgres 145/145. |
 | 4 | Done | Notes, activities, follow-ups, timeline, follow-ups page, alerts bell. SQLite 152 + 1 skipped, Postgres 153/153. |
-| 5 | Not started | |
+| 5 | Done | Dashboard + Reports + report CSV. SQLite 156 + 1 skipped, Postgres 157/157. |
 | 6 | Not started | |
 
 ## Step 2 report
@@ -97,6 +97,27 @@ midnight IST; a follow-up completed with an outcome logs a call/email/meeting ac
 "follow-up"); Follow-up types: Call, Send Email, Meeting, Product Demo, Check-in, Send Proposal, Other.
 
 **Commit:** see the "Step 4" commit.
+
+## Step 5 report
+
+**Built:** dashboard (8 stat cards: total, new, contacted, qualified, due today, overdue, won with
+per-currency value, lost; pipeline strip with per-currency values; follow-up queue with Done; recent
+activity; lead sources), all from a few grouped queries in `App\Support\LeadStats` on
+`Lead::visibleTo()`. Reports for admin/manager with a date range (IST days): win rate, won value per
+currency, follow-up completion rate, funnel from milestone timestamps, by status/source/assignee/team,
+sales scorecard (assigned, contacted, qualified, won, won value per currency, average time to first
+contact, follow-up completion). Report CSV export (audited, 10/hour, formula injection protected via
+`App\Support\Csv`).
+
+**Charts (5.3):** no JS chart library. The prototype's charts are simple horizontal bars, so they are
+rendered on the server as inline SVG (`<x-bar-chart>`): identical look, CSP-safe (no eval, no inline
+styles, widths are SVG attributes), nothing extra to bundle or keep updated.
+
+**Decisions:** "New" = leads in the default status; "Contacted/Qualified" = leads that ever reached the
+milestone; follow-up completion = completed ÷ (follow-ups that came due, excluding cancelled); reports
+count leads created in the range; small query-string/PATCH inputs (report dates, follow-up page filter,
+panel status/assignee/priority) are validated inline with `$request->validate()` rather than separate
+Form Request classes.
 
 ## Decisions made overnight
 
