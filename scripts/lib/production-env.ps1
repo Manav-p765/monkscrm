@@ -75,6 +75,8 @@ function Initialize-ProductionEnv {
     Set-ProcessEnv 'APP_KEY' $appKey
     Set-ProcessEnv 'DB_CONNECTION' 'pgsql'
     Set-ProcessEnv 'DB_URL' $url
+    # A url without a port would otherwise pick up DB_PORT from the local .env (e.g. 5434).
+    Set-ProcessEnv 'DB_PORT' $(if ($uri.Port -gt 0) { [string]$uri.Port } else { '5432' })
     Set-ProcessEnv 'DB_SSLMODE' 'require'
     # Same stores as the live app, so cache clears (e.g. settings) reach production.
     Set-ProcessEnv 'CACHE_STORE' 'database'
