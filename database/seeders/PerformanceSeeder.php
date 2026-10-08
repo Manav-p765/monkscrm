@@ -22,8 +22,9 @@ class PerformanceSeeder extends Seeder
 
     public function run(): void
     {
-        if (app()->environment('production')) {
-            throw new RuntimeException('PerformanceSeeder refuses to run when APP_ENV=production.');
+        // Fake users and leads: never anywhere but a developer machine (not production, staging or CI).
+        if (! app()->environment('local')) {
+            throw new RuntimeException('PerformanceSeeder only runs when APP_ENV=local.');
         }
 
         $faker = fake();
