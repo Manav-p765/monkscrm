@@ -67,6 +67,12 @@ class Dates
         return self::fromInput(now(self::zone())->toDateString())->addDay();
     }
 
+    /** Whether the instant falls on today's date in IST. */
+    public static function isToday(?DateTimeInterface $value): bool
+    {
+        return $value !== null && self::local($value)->toDateString() === now(self::zone())->toDateString();
+    }
+
     /** Value for an <input type="datetime-local"> showing a stored UTC time in IST. */
     public static function toInput(?DateTimeInterface $value): string
     {

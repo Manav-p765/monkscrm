@@ -1,7 +1,7 @@
 {{-- Panel modals (prototype "Log Interaction" and "Schedule Follow-Up"). Inside the slide-over so they stay interactive. --}}
 @php
-    $nowLocal = now(\App\Support\Dates::zone());
-    $tomorrow10 = $nowLocal->copy()->addDay()->setTime(10, 0)->format('Y-m-d\TH:i');
+    $nowInput = \App\Support\Dates::toInput(now());
+    $tomorrow10 = \App\Support\Dates::toInput(\App\Support\Dates::endOfToday()->addHours(10));
     $followUpTypes = collect(\App\Enums\FollowUpType::cases())->mapWithKeys(fn ($t) => [$t->value => $t->label()]);
     $activityTypes = ['call' => 'Phone Call', 'email' => 'Email', 'meeting' => 'Video Meeting / Demo', 'sms' => 'SMS Text', 'other' => 'Other'];
     $openActivity = $errors->activity->any() ? old('type', 'other') : null;
@@ -15,7 +15,7 @@
                 @csrf
                 <div class="grid grid-cols-2 gap-3">
                     <x-select name="type" :id="'act-type-'.$preset" bag="activity" label="Activity Type" :options="$activityTypes" :value="$preset === 'other' ? 'call' : $preset" required />
-                    <x-input name="occurred_at" :id="'act-at-'.$preset" bag="activity" type="datetime-local" label="When" :value="$nowLocal->format('Y-m-d\TH:i')" hint="India time" />
+                    <x-input name="occurred_at" :id="'act-at-'.$preset" bag="activity" type="datetime-local" label="When" :value="$nowInput" hint="India time" />
                 </div>
                 <x-textarea name="description" :id="'act-desc-'.$preset" bag="activity" label="Notes / Description" rows="3" placeholder="Discussed pricing model, next steps…" required />
                 <x-input name="outcome" :id="'act-outcome-'.$preset" bag="activity" label="Outcome" placeholder="e.g. Qualified, Agreed to send NDA, Left voicemail" />

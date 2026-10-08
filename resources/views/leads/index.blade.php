@@ -7,7 +7,6 @@
         return request()->fullUrlWithQuery(['sort' => $key, 'dir' => $dir, 'page' => null]);
     };
     $sortIcon = fn (string $key) => ($filters['sort'] ?? 'created') === $key ? (($filters['dir'] ?? 'desc') === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrow-up-down';
-    $today = now(\App\Support\Dates::zone())->toDateString();
 @endphp
 
 <x-layouts.app :title="$archived ? 'Archived Leads' : 'Lead Directory'" :count="$leads->total().' leads'"
@@ -149,7 +148,7 @@
                 @php
                     $due = $lead->next_follow_up_at;
                     $overdue = $due && $due->isPast();
-                    $dueToday = $due && ! $overdue && $due->copy()->setTimezone(\App\Support\Dates::zone())->toDateString() === $today;
+                    $dueToday = ! $overdue && \App\Support\Dates::isToday($due);
                     $href = $archived ? null : route('leads.show', [$lead, ...$query]);
                 @endphp
                 <tr @if ($href) data-href="{{ $href }}" @endif @class(['bg-indigo-50/40' => $panel?->is($lead)])>

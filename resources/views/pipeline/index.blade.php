@@ -1,6 +1,5 @@
 @php
     $query = request()->query();
-    $today = now(\App\Support\Dates::zone())->toDateString();
     $user = auth()->user();
     // Rendered once and reused on every card (cheaper than a component per card).
     $icons = [
@@ -68,7 +67,7 @@
                                     // Lean markup on purpose: up to 50 cards per column, so no nested components per card.
                                     $due = $lead->next_follow_up_at;
                                     $late = $due && $due->isPast();
-                                    $isToday = $due && ! $late && $due->copy()->setTimezone(\App\Support\Dates::zone())->toDateString() === $today;
+                                    $isToday = ! $late && \App\Support\Dates::isToday($due);
                                     $canMove = $user->can('update', $lead);
                                     $pr = $lead->priority?->value;
                                 @endphp

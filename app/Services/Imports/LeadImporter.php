@@ -513,7 +513,8 @@ class LeadImporter
         $defaultStatus = (int) Settings::get('default_status_id');
         $f['status_id'] = $defaultStatus;
         if (($v['status'] ?? '') !== '') {
-            $status = $lookups['statuses']->first(fn ($s) => mb_strtolower($s->name) === mb_strtolower($v['status']));
+            // Only active statuses/sources match; a turned-off one is treated as unknown (like the form).
+            $status = $lookups['statuses']->first(fn ($s) => $s->is_active && mb_strtolower($s->name) === mb_strtolower($v['status']));
             if (! $status) {
                 $status = $this->unknown('status', $v['status'], $options, $importer, $lookups, $errors);
             }
@@ -524,7 +525,7 @@ class LeadImporter
         }
         $f['source_id'] = (int) Settings::get('default_source_id');
         if (($v['source'] ?? '') !== '') {
-            $source = $lookups['sources']->first(fn ($s) => mb_strtolower($s->name) === mb_strtolower($v['source']));
+            $source = $lookups['sources']->first(fn ($s) => $s->is_active && mb_strtolower($s->name) === mb_strtolower($v['source']));
             if (! $source) {
                 $source = $this->unknown('source', $v['source'], $options, $importer, $lookups, $errors);
             }
@@ -572,6 +573,11 @@ class LeadImporter
         }
         if ($choice === 'create' && $kind !== 'assigned_to' && $importer->isAdmin()) {
             $name = mb_substr($value, 0, 100);
+            $key = ['status' => 'statuses', 'source' => 'sources', 'tags' => 'tags'][$kind];
+            // A turned-off status/source with this name exists: never revive or duplicate it; use the default.
+            if ($lookups[$key]->contains(fn ($m) => mb_strtolower($m->name) === mb_strtolower($name))) {
+                return null;
+            }
             $model = match ($kind) {
                 'status' => LeadStatus::firstOrCreate(['name' => $name], ['color' => config('crm.palette.slate.hex'), 'type' => LeadStatusType::Open, 'sort_order' => (int) LeadStatus::max('sort_order') + 10, 'is_active' => true]),
                 'source' => LeadSource::firstOrCreate(['name' => $name], ['is_active' => true, 'sort_order' => (int) LeadSource::max('sort_order') + 10]),
@@ -580,7 +586,6 @@ class LeadImporter
             if ($model->wasRecentlyCreated) {
                 Audit::log(($kind === 'tags' ? 'tag' : $kind).'.created', $model, ['name' => $name, 'via' => 'import'], $importer->id);
             }
-            $key = ['status' => 'statuses', 'source' => 'sources', 'tags' => 'tags'][$kind];
             $lookups[$key]->push($model);
 
             return $model;

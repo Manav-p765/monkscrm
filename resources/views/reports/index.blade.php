@@ -7,7 +7,7 @@
         <x-input name="from" type="date" label="From date" size="filter" :value="$filters['from']" />
         <x-input name="to" type="date" label="To date" size="filter" :value="$filters['to']" />
     </x-filter-bar>
-    <p class="-mt-3 text-2xs text-slate-500">Leads created between <strong>{{ \Illuminate\Support\Carbon::parse($filters['from'])->format('j M Y') }}</strong> and <strong>{{ \Illuminate\Support\Carbon::parse($filters['to'])->format('j M Y') }}</strong> (India time).</p>
+    <p class="-mt-3 text-2xs text-slate-500">Leads created between <strong>{{ \App\Support\Dates::day(\App\Support\Dates::fromInput($filters['from'])) }}</strong> and <strong>{{ \App\Support\Dates::day(\App\Support\Dates::fromInput($filters['to'])) }}</strong> (India time).</p>
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <x-stat label="Closed Won Value" tone="emerald" :hint="'Across '.$cards['won'].' won '.\Illuminate\Support\Str::plural('lead', $cards['won'])">
