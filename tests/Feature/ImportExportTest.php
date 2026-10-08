@@ -198,7 +198,7 @@ class ImportExportTest extends TestCase
 
     public function test_update_and_new_strategies(): void
     {
-        $existing = Lead::factory()->create(['email' => 'existing@x.com', 'phone' => null, 'company' => 'Old Co', 'city' => 'Pune']);
+        $existing = Lead::factory()->create(['email' => 'existing@x.com', 'phone' => null, 'company' => 'Old Co', 'city' => 'Pune', 'lead_status_id' => LeadStatus::where('name', 'New')->value('id')]);
         $rows = [self::HEADER, ['Ex Isting', 'New Co', 'existing@x.com', '', 'Won', '', '', '', '', '', '']];
 
         $import = $this->upload($this->csv($rows));

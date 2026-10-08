@@ -29,7 +29,8 @@ class LeadFactory extends Factory
             'country' => fake()->randomElement(['India', 'United States', 'United Kingdom', 'UAE', 'Singapore']),
             'website' => fake()->optional(0.4)->url(),
             'description' => fake()->optional(0.5)->sentence(12),
-            'lead_status_id' => fn () => LeadStatus::query()->inRandomOrder()->value('id')
+            // An early open status (no milestone), so tests that move a lead always change something.
+            'lead_status_id' => fn () => LeadStatus::query()->where('type', 'open')->whereNull('milestone')->inRandomOrder()->value('id')
                 ?? LeadStatus::create(['name' => 'New', 'color' => '#2563eb', 'type' => 'open'])->id,
             'lead_source_id' => fn () => LeadSource::query()->inRandomOrder()->value('id'),
             'priority' => fake()->optional(0.7)->randomElement(LeadPriority::cases()),

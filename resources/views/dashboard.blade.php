@@ -38,9 +38,9 @@
             <span class="text-xs font-bold text-slate-900">Lead Pipeline Stages</span>
             <span class="text-2xs text-slate-500">Active value: <x-money :totals="$activeTotals" class="font-bold text-slate-800" /></span>
         </div>
-        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
             @foreach ($pipeline as $row)
-                <a href="{{ route('leads.index', ['status' => $row['status']->id]) }}" class="rounded-lg border border-slate-200 p-3 text-left transition hover:border-indigo-400 hover:bg-slate-50/60">
+                <a href="{{ route('leads.index', ['status' => $row['status']->id]) }}" class="min-w-0 rounded-lg border border-slate-200 p-3 text-left transition hover:border-indigo-400 hover:bg-slate-50/60">
                     <div class="mb-1 flex items-center gap-1.5 text-xs text-slate-600">
                         <x-badge :color="$row['status']->color" class="border-0 bg-transparent px-0 text-xs font-semibold text-slate-600">{{ $row['status']->name }}</x-badge>
                     </div>

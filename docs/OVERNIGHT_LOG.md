@@ -1,7 +1,42 @@
 # Overnight log
 
 ## Summary
-_(written at the end of the night)_
+
+**All of Steps 2–6 are Done; none Blocked. Step 7 (deploy) was not started.**
+- Step 2: design system, app shell, users & teams (invites), settings, audit log.
+- Step 3: leads list/search/filters, create/edit with duplicate checks, lead panel, bulk actions, Kanban;
+  tested with 20,000 leads.
+- Step 4: notes, logged activities, follow-ups, timeline, Follow-Ups page, alerts bell.
+- Step 5: dashboard and reports, with SVG bars (no chart library) and a report CSV.
+- Step 6: import wizard (chunked, resumable, undo within 24 h), import history, lead export.
+
+**Final test run (latest):** `php artisan test` 167 passed + 1 skipped (a Postgres-only test),
+`composer test:pgsql` 168/168. Three flaky tests were fixed at the end: the lead factory now starts
+leads in an early open status, so status-change tests always change something, and the alerts test
+pins the user's creation date.
+
+**Packages added overnight:** `mallardduck/blade-lucide-icons` (icons), `@fontsource/plus-jakarta-sans`
+(font), `openspout/openspout` (CSV/XLSX import).
+
+**Remaining visual differences from the prototype:**
+- Sign-in has a heading instead of the Sign In / Create Admin tabs (self-signup is excluded).
+- Avatars are initials, not photos.
+- Kanban column money totals refresh on reload, not live after a drag (counts update live).
+- Kanban "Move to…" is a small dropdown on each card (keyboard-friendly), where the prototype has
+  arrow buttons.
+- The dashboard has 8 stat cards (the plan's list) where the prototype has 4, and its pipeline strip
+  wraps to 4 per row.
+- Text is never lighter than slate-500, for contrast.
+- Screens are in `docs/build-screens/` (01–62).
+
+**Needs Kartik:**
+- Nothing blocking.
+- Outside the project folder I enabled OPcache in `D:\php84\php.ini` (local only), and Docker Desktop
+  stopped once overnight and I restarted it.
+- The local Postgres now has 20,000 fake performance leads (`PerformanceSeeder`). Wipe them with
+  `php artisan migrate:fresh --seed` if you don't want them.
+- Before Step 7: decide SMTP for invite/reset emails and run `php artisan icons:cache` at container
+  start.
 
 ## Rules for the night (from Kartik, 2026-10-07)
 - Finish Step 2 and its report, then Steps 3, 4, 5, 6 from `docs/OVERNIGHT_PLAN.md`, in order. **No Step 7 (deploy).**

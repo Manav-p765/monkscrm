@@ -220,6 +220,8 @@ class LeadWorkTest extends TestCase
     public function test_alerts_count_my_due_follow_ups_and_new_assignments_respecting_visibility(): void
     {
         Carbon::setTestNow('2026-10-08 12:00:00');
+        // The user existed before the frozen "now" (alerts count assignments after they joined / last looked).
+        $this->sales->forceFill(['created_at' => now()->subDay()])->save();
         $lead = $this->lead($this->sales);
         FollowUp::forceCreate(['lead_id' => $lead->id, 'assigned_to' => $this->sales->id, 'created_by' => $this->sales->id, 'type' => 'call', 'due_at' => '2026-10-08 10:00:00', 'status' => 'pending']);
         FollowUp::forceCreate(['lead_id' => $lead->id, 'assigned_to' => $this->sales->id, 'created_by' => $this->sales->id, 'type' => 'call', 'due_at' => '2026-10-08 15:00:00', 'status' => 'pending']);
