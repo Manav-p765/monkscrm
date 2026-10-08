@@ -49,6 +49,13 @@ class SeederSafetyTest extends TestCase
         }
 
         $this->assertSame($first, $this->counts());
+        // No duplicates (case-insensitive, matching the lower(name) unique indexes).
+        foreach ([LeadStatus::class, LeadSource::class, Tag::class] as $model) {
+            $names = $model::pluck('name')->map(fn ($n) => mb_strtolower($n));
+            $this->assertSame($names->count(), $names->unique()->count(), "{$model} has duplicate names");
+        }
+        $keys = Setting::pluck('key');
+        $this->assertSame($keys->count(), $keys->unique()->count(), 'settings has duplicate keys');
         $this->assertGreaterThan(0, $first['statuses']);
         $this->assertGreaterThan(0, $first['sources']);
         $this->assertGreaterThan(0, $first['tags']);
