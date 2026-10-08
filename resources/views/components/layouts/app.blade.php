@@ -16,6 +16,9 @@
     $user = auth()->user();
     $maxWidth = ['5xl' => 'max-w-5xl', '6xl' => 'max-w-6xl', '7xl' => 'max-w-7xl', 'full' => 'max-w-none'][$width] ?? 'max-w-7xl';
     $canCreateLead = $user->can('create', App\Models\Lead::class);
+    $alerts = \App\Support\Alerts::for($user);
+    $visibleLeadCount = $user->can('viewAny', App\Models\Lead::class) ? App\Models\Lead::query()->visibleTo($user)->count() : 0;
+    $dueCount = $alerts['counts']['overdue'] + $alerts['counts']['today'];
 @endphp
 
 <!DOCTYPE html>
@@ -52,10 +55,10 @@
             <p class="px-2.5 py-1.5 text-3xs font-bold tracking-wider text-slate-500 uppercase">Workspace</p>
             <x-nav-link icon="layout-dashboard" :href="route('dashboard')" :active="request()->routeIs('dashboard')">Dashboard</x-nav-link>
             @can('viewAny', App\Models\Lead::class)
-                <x-nav-link icon="users-2" :href="route('leads.index')" :active="request()->routeIs('leads.*')">Leads</x-nav-link>
+                <x-nav-link icon="users-2" :href="route('leads.index')" :active="request()->routeIs('leads.*')" :badge="$visibleLeadCount">Leads</x-nav-link>
                 <x-nav-link icon="kanban" :href="route('pipeline.index')" :active="request()->routeIs('pipeline.*')">Pipeline</x-nav-link>
             @endcan
-            <x-nav-link icon="calendar-check-2" :href="route('follow-ups.index')" :active="request()->routeIs('follow-ups.*')">Follow-Ups</x-nav-link>
+            <x-nav-link icon="calendar-check-2" :href="route('follow-ups.index')" :active="request()->routeIs('follow-ups.*')" :badge="$dueCount ?: null" :highlight="$dueCount > 0">Follow-Ups</x-nav-link>
             @can('import-leads')
                 <x-nav-link icon="upload-cloud" :href="route('imports.index')" :active="request()->routeIs('imports.*')">Imports</x-nav-link>
             @endcan
@@ -128,12 +131,15 @@
             </div>
 
             <div class="flex items-center gap-3">
-                {{-- Follow-up alerts (live data in step 4) --}}
+                {{-- Alerts bell (prototype "Follow-Up Alerts"), computed per request --}}
                 <x-dropdown width="w-80">
                     <x-slot:trigger>
                         <button type="button" class="relative rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800" aria-haspopup="true">
-                            <span class="sr-only">Follow-up alerts</span>
+                            <span class="sr-only">Alerts: {{ $alerts['total'] }}</span>
                             <x-lucide-bell class="size-4.5" aria-hidden="true" />
+                            @if ($alerts['total'] > 0)
+                                <span class="absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-4xs font-bold text-white" aria-hidden="true">{{ $alerts['total'] > 99 ? '99+' : $alerts['total'] }}</span>
+                            @endif
                         </button>
                     </x-slot:trigger>
                     <div class="-my-1 overflow-hidden rounded-xl">
@@ -142,9 +148,44 @@
                                 <x-lucide-clock class="size-3.5 text-indigo-600" aria-hidden="true" />
                                 <span>Follow-Up Alerts</span>
                             </p>
-                            <span class="text-2xs font-medium text-slate-500">0 pending</span>
+                            <span class="text-2xs font-medium text-slate-500">{{ $alerts['total'] }} pending</span>
                         </div>
-                        <p class="p-6 text-center text-xs text-slate-500">No alerts</p>
+                        @if ($alerts['total'] === 0)
+                            <p class="p-6 text-center text-xs text-slate-500">No alerts. You're all caught up.</p>
+                        @else
+                            <div class="max-h-80 divide-y divide-slate-100 overflow-y-auto">
+                                @foreach ([['overdue', 'Overdue', 'red'], ['today', 'Due Today', 'amber']] as [$key, $label, $tone])
+                                    @foreach ($alerts[$key] as $fu)
+                                        <a href="{{ route('leads.show', $fu->lead) }}?tab=followups" class="block p-3 text-left transition hover:bg-slate-50">
+                                            <span class="mb-1 flex items-center justify-between gap-2">
+                                                <span class="truncate text-xs font-semibold text-slate-900">{{ $fu->lead->displayName() }}</span>
+                                                <x-badge :tone="$tone">{{ $label }}</x-badge>
+                                            </span>
+                                            <span class="line-clamp-1 block text-2xs text-slate-600">{{ $fu->notes ?: $fu->type->label() }}</span>
+                                            <span class="mt-1 flex items-center justify-between text-3xs text-slate-500"><span>{{ $fu->lead->company }}</span><x-date :value="$fu->due_at" /></span>
+                                        </a>
+                                    @endforeach
+                                @endforeach
+                                @foreach ($alerts['assigned'] as $lead)
+                                    <a href="{{ route('leads.show', $lead) }}" class="block p-3 text-left transition hover:bg-slate-50">
+                                        <span class="mb-1 flex items-center justify-between gap-2">
+                                            <span class="truncate text-xs font-semibold text-slate-900">{{ $lead->displayName() }}</span>
+                                            <x-badge tone="indigo">Assigned to you</x-badge>
+                                        </span>
+                                        <span class="text-3xs text-slate-500">{{ $lead->company }} · {{ $lead->reference }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                            <div class="flex items-center justify-between border-t border-slate-100 bg-slate-50/70 p-2.5 px-3">
+                                <a href="{{ route('follow-ups.index') }}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">View all follow-ups</a>
+                                @if ($alerts['counts']['assigned'] > 0)
+                                    <form method="POST" action="{{ route('alerts.seen') }}">
+                                        @csrf
+                                        <button type="submit" class="rounded px-1.5 py-0.5 text-xs font-medium text-slate-600 hover:bg-white hover:text-slate-900">Mark all as seen</button>
+                                    </form>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 </x-dropdown>
 

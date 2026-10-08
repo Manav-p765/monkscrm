@@ -42,9 +42,9 @@ class LeadsTest extends TestCase
     private function threeLeads(): array
     {
         return [
-            'mine' => Lead::factory()->create(['assigned_to' => $this->sales->id, 'first_name' => 'Mina', 'last_name' => 'Mine', 'email' => 'mina@example.com']),
-            'unassigned' => Lead::factory()->create(['assigned_to' => null, 'first_name' => 'Una', 'last_name' => 'Nobody', 'email' => 'una@example.com']),
-            'theirs' => Lead::factory()->create(['assigned_to' => $this->otherSales->id, 'first_name' => 'Theo', 'last_name' => 'Theirs', 'email' => 'theo@example.com']),
+            'mine' => Lead::factory()->create(['lead_status_id' => LeadStatus::where('name', 'New')->value('id'), 'assigned_to' => $this->sales->id, 'first_name' => 'Mina', 'last_name' => 'Mine', 'email' => 'mina@example.com']),
+            'unassigned' => Lead::factory()->create(['lead_status_id' => LeadStatus::where('name', 'New')->value('id'), 'assigned_to' => null, 'first_name' => 'Una', 'last_name' => 'Nobody', 'email' => 'una@example.com']),
+            'theirs' => Lead::factory()->create(['lead_status_id' => LeadStatus::where('name', 'New')->value('id'), 'assigned_to' => $this->otherSales->id, 'first_name' => 'Theo', 'last_name' => 'Theirs', 'email' => 'theo@example.com']),
         ];
     }
 

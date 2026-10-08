@@ -3,7 +3,9 @@
 use App\Http\Controllers\AcceptInviteController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\LeadBulkController;
+use App\Http\Controllers\LeadWorkController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadDuplicateCheckController;
 use App\Http\Controllers\LeadSearchController;
@@ -59,9 +61,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/pipeline', PipelineController::class)->name('pipeline.index');
     });
 
-    Route::get('/follow-ups', PlaceholderController::class)
-        ->defaults('section', 'Follow-Ups')
-        ->name('follow-ups.index');
+    // Lead work (notes, activities, follow-ups). Notes/follow-ups bind through their lead's visibility.
+    Route::post('/leads/{lead}/notes', [LeadWorkController::class, 'storeNote'])->name('leads.notes.store');
+    Route::put('/notes/{note}', [LeadWorkController::class, 'updateNote'])->name('notes.update');
+    Route::delete('/notes/{note}', [LeadWorkController::class, 'destroyNote'])->name('notes.destroy');
+    Route::post('/leads/{lead}/activities', [LeadWorkController::class, 'storeActivity'])->name('leads.activities.store');
+    Route::post('/leads/{lead}/follow-ups', [LeadWorkController::class, 'storeFollowUp'])->name('leads.follow-ups.store');
+    Route::patch('/follow-ups/{followUp}', [LeadWorkController::class, 'updateFollowUp'])->name('follow-ups.update');
+
+    Route::get('/follow-ups', [FollowUpController::class, 'index'])->name('follow-ups.index');
+    Route::post('/alerts/seen', [FollowUpController::class, 'markAlertsSeen'])->name('alerts.seen');
 
     Route::get('/imports', PlaceholderController::class)
         ->defaults('section', 'Imports')

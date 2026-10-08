@@ -18,6 +18,7 @@ use App\Services\Leads\LeadDuplicates;
 use App\Services\Leads\LeadStatusChanger;
 use App\Support\Audit;
 use App\Support\LeadFilters;
+use App\Support\LeadTimeline;
 use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -230,7 +231,11 @@ class LeadController extends Controller
             'visibleTotal' => Lead::query()->visibleTo($user)->count(),
             'lookups' => $this->lookups($user, $form),
             'panel' => $panel?->load(['status', 'source', 'originalSource', 'assignee', 'creator:id,name', 'tags',
-                'activities' => fn ($q) => $q->with('user:id,name')->latest('occurred_at')->limit(50)]),
+                'notes' => fn ($q) => $q->with('user:id,name')->latest(),
+                'followUps' => fn ($q) => $q->with('assignee:id,name')->orderByRaw("case status when 'pending' then 0 else 1 end")->orderBy('due_at')]),
+            'timeline' => $panel ? LeadTimeline::for($panel, (string) $request->query('tl', 'all'), max(1, (int) $request->query('tl_page', 1))) : null,
+            'panelTab' => in_array($request->query('tab'), ['timeline', 'notes', 'followups', 'details'], true) ? $request->query('tab') : 'timeline',
+            'followUpAssignees' => $panel ? $this->followUpAssignees($user, $panel) : collect(),
             'form' => $form,
             'duplicate' => session('duplicate'),
         ]);
@@ -257,6 +262,17 @@ class LeadController extends Controller
             'priorities' => LeadPriority::cases(),
             'openStatusIds' => LeadStatus::query()->where('type', LeadStatusType::Open)->pluck('id')->all(),
         ];
+    }
+
+    /** People a follow-up on this lead can go to: active users who can see it (sales: only themselves). */
+    private function followUpAssignees(User $user, Lead $lead)
+    {
+        if (! \App\Support\Permissions::allows($user, 'assign-leads')) {
+            return collect([$user->id => $user->name]);
+        }
+
+        return User::query()->where('is_active', true)->orderBy('name')->get()
+            ->filter(fn (User $u) => $lead->isVisibleTo($u))->pluck('name', 'id');
     }
 
     /** Fillable lead fields from the validated form (ownership fields are set separately). */

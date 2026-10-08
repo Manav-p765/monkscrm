@@ -24,7 +24,7 @@ _(written at the end of the night)_
 |---|---|---|
 | 2 | Done | See "Step 2 report" below. SQLite 124 + 1 skipped, Postgres 125/125. |
 | 3 | Done | Leads core, panel, bulk, Kanban, perf. SQLite 144 + 1 skipped, Postgres 145/145. |
-| 4 | Not started | |
+| 4 | Done | Notes, activities, follow-ups, timeline, follow-ups page, alerts bell. SQLite 152 + 1 skipped, Postgres 153/153. |
 | 5 | Not started | |
 | 6 | Not started | |
 
@@ -78,6 +78,25 @@ settings memoized per request (was 1,200 cache-store reads on a Sales pipeline).
 user can see are named; secondary email/phone are searched but not used for duplicate matching; Kanban
 column totals don't update live after a drag (counts do); quick actions in the panel are disabled until
 Step 4; My Profile name/phone editing still pending.
+
+## Step 4 report
+
+**Built:** notes (add; author edits within 15 minutes; admin soft-delete, audited), log activity
+(call/email/meeting/SMS/other, IST date/time, outcome, optional follow-up for yourself; contact types
+update last/first contacted), merged timeline (activities + system events + notes, type filter, 20 per
+page), follow-ups (schedule, complete with optional outcome → logged activity, cancel, reschedule,
+reopen; `FollowUps::sync()` keeps `leads.next_follow_up_at` = earliest pending), Follow-Ups page
+(Overdue / Due Today / Upcoming / Completed; sales see their own, admins/managers everyone + assignee
+filter), alerts bell (overdue, due today, newly assigned since `users.alerts_seen_at`, badge, list,
+"Mark all as seen"), sidebar counts (leads, follow-ups due). Migration: notes soft deletes,
+`users.alerts_seen_at`, `follow_ups.outcome`. New permission `delete-notes` (admin).
+
+**Decisions:** follow-ups are scheduled from the lead panel only (the prototype's page-level "Schedule"
+modal needs a lead picker over up to 20k leads; the page links to Leads instead); "Due Today" ends at
+midnight IST; a follow-up completed with an outcome logs a call/email/meeting activity (other types log
+"follow-up"); Follow-up types: Call, Send Email, Meeting, Product Demo, Check-in, Send Proposal, Other.
+
+**Commit:** see the "Step 4" commit.
 
 ## Decisions made overnight
 

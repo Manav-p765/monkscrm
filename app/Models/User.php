@@ -62,6 +62,7 @@ class User extends Authenticatable
             'role' => Role::class,
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
+            'alerts_seen_at' => 'datetime',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }

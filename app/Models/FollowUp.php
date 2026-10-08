@@ -15,7 +15,7 @@ class FollowUp extends Model
      *
      * @var list<string>
      */
-    protected $fillable = ['assigned_to', 'type', 'due_at', 'notes', 'status', 'completed_at'];
+    protected $fillable = ['assigned_to', 'type', 'due_at', 'notes', 'status', 'completed_at', 'outcome'];
 
     protected function casts(): array
     {
@@ -33,6 +33,21 @@ class FollowUp extends Model
     public function scopeOverdue(Builder $query): void
     {
         $query->where('status', FollowUpStatus::Pending)->where('due_at', '<', now());
+    }
+
+    /** 404 unless the follow-up's lead is visible to the signed-in user. */
+    public function resolveRouteBinding($value, $field = null): ?self
+    {
+        $user = auth()->user();
+
+        return $user ? static::query()->where($field ?? 'id', $value)
+            ->whereHas('lead', fn ($q) => $q->visibleTo($user))->first() : null;
+    }
+
+    /** Follow-ups whose lead the user can see. */
+    public function scopeVisibleTo(Builder $query, User $user): void
+    {
+        $query->whereHas('lead', fn ($q) => $q->visibleTo($user));
     }
 
     public function isOverdue(): bool

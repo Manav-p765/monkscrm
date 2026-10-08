@@ -84,7 +84,7 @@
                   class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5">
                 @csrf @method('PATCH')
                 <label for="panel-assignee" class="text-2xs font-semibold tracking-wider text-slate-500 uppercase">Assigned To:</label>
-                @php($canAssign = $canEdit && ($lookups['canAssignOthers'] || $lead->assigned_to !== auth()->id()))
+                @php $canAssign = $canEdit && ($lookups['canAssignOthers'] || $lead->assigned_to !== auth()->id()); @endphp
                 <select id="panel-assignee" name="assigned_to" @disabled(! $canAssign) class="flex-1 truncate bg-transparent text-xs font-medium text-slate-900 focus:outline-none">
                     @if ($lookups['canAssignOthers'] || ! $lead->assigned_to)
                         <option value="">Unassigned</option>
@@ -99,63 +99,164 @@
             </form>
         </div>
 
-        {{-- Quick actions (prototype toolbar). Logging and follow-ups arrive with lead activity (step 4). --}}
-        <div class="mt-4 flex items-center gap-2 overflow-x-auto pb-1">
-            @foreach ([['phone-call', 'text-emerald-600', 'Log Call'], ['send', 'text-blue-600', 'Log Email'], ['video', 'text-purple-600', 'Log Meeting']] as [$icon, $tone, $label])
-                <button type="button" disabled title="Coming soon" class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-slate-700 opacity-60 shadow-2xs">
-                    <x-dynamic-component :component="'lucide-'.$icon" class="size-3.25 {{ $tone }}" aria-hidden="true" /><span>{{ $label }}</span>
-                </button>
-            @endforeach
-            <button type="button" disabled title="Coming soon" class="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-indigo-700 opacity-60 shadow-2xs">
-                <x-lucide-clock class="size-3.25 text-indigo-600" aria-hidden="true" /><span>Schedule Follow-Up</span>
-            </button>
-        </div>
+        {{-- Quick actions (prototype toolbar) --}}
+        @can('logActivity', $lead)
+            <div class="mt-4 flex items-center gap-2 overflow-x-auto pb-1">
+                @foreach ([['call', 'phone-call', 'text-emerald-600', 'Log Call'], ['email', 'send', 'text-blue-600', 'Log Email'], ['meeting', 'video', 'text-purple-600', 'Log Meeting']] as [$type, $icon, $tone, $label])
+                    <button type="button" x-data="modalTrigger" data-modal="log-{{ $type }}" x-on:click="open"
+                            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-slate-700 shadow-2xs transition hover:bg-slate-50">
+                        <x-dynamic-component :component="'lucide-'.$icon" class="size-3.25 {{ $tone }}" aria-hidden="true" /><span>{{ $label }}</span>
+                    </button>
+                @endforeach
+                @can('scheduleFollowUp', $lead)
+                    <button type="button" x-data="modalTrigger" data-modal="schedule-follow-up" x-on:click="open"
+                            class="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-indigo-700 shadow-2xs transition hover:bg-indigo-100">
+                        <x-lucide-clock class="size-3.25 text-indigo-600" aria-hidden="true" /><span>Schedule Follow-Up</span>
+                    </button>
+                @endcan
+            </div>
+        @endcan
     </x-slot:header>
 
-    <x-tabs variant="underline" active="timeline" label="Lead sections" :tabs="[
-        'timeline' => ['label' => 'Activity Timeline', 'count' => $lead->activities->count()],
-        'notes' => ['label' => 'Internal Notes', 'count' => $lead->notes()->count()],
-        'followups' => ['label' => 'Follow-Ups', 'count' => $lead->followUps()->count()],
+    @php
+        $canLog = auth()->user()->can('logActivity', $lead);
+        $canSchedule = auth()->user()->can('scheduleFollowUp', $lead);
+        $tabUrl = fn (array $q) => route('leads.show', [$lead, ...$q]);
+    @endphp
+    <x-tabs variant="underline" :active="$panelTab" label="Lead sections" :tabs="[
+        'timeline' => ['label' => 'Activity Timeline', 'count' => $timeline->total()],
+        'notes' => ['label' => 'Internal Notes', 'count' => $lead->notes->count()],
+        'followups' => ['label' => 'Follow-Ups', 'count' => $lead->followUps->where('status', \App\Enums\FollowUpStatus::Pending)->count()],
         'details' => ['label' => 'Contact Details'],
-    ]" class="[&>[role=tablist]]:bg-white">
+    ]" class="*:[[role=tablist]]:bg-white">
         <div class="p-6">
-            <x-tab-panel name="timeline" class="space-y-6">
-                <span class="text-xs font-bold text-slate-700">Chronological Lead History</span>
-                @if ($lead->activities->isEmpty())
-                    <x-empty-state title="No activity yet" icon="activity">Status changes, assignments and logged calls will appear here.</x-empty-state>
+            {{-- Timeline --}}
+            <x-tab-panel name="timeline" :active="$panelTab === 'timeline'" class="space-y-5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-xs font-bold text-slate-700">Chronological Lead History</span>
+                    @if ($canLog)
+                        <button type="button" x-data="modalTrigger" data-modal="log-other" x-on:click="open" class="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                            <x-lucide-plus class="size-3.25" aria-hidden="true" /><span>Log Interaction</span>
+                        </button>
+                    @endif
+                </div>
+                <nav aria-label="Timeline filter" class="flex flex-wrap gap-1.5">
+                    @foreach (\App\Support\LeadTimeline::FILTERS as $key => $label)
+                        @php $on = request('tl', 'all') === $key; @endphp
+                        <a href="{{ $tabUrl(['tab' => 'timeline', 'tl' => $key]) }}" @if ($on) aria-current="page" @endif
+                           @class(['rounded-lg px-2.5 py-1 text-2xs font-medium transition', 'bg-slate-900 text-white' => $on, 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50' => ! $on])>{{ $label }}</a>
+                    @endforeach
+                </nav>
+                @if ($timeline->isEmpty())
+                    <x-empty-state title="Nothing here yet" icon="activity">Logged calls, emails, meetings, notes and changes will appear here.</x-empty-state>
                 @else
                     <div class="relative space-y-6 pl-6 before:absolute before:top-2 before:bottom-2 before:left-2.5 before:w-0.5 before:bg-slate-200">
-                        @foreach ($lead->activities as $activity)
-                            @php([$icon, $tone] = $activityIcon($activity))
+                        @foreach ($timeline as $item)
+                            @php
+                                [$icon, $tone] = match ($item['kind']) {
+                                    'call' => ['phone-call', 'text-emerald-600'], 'email' => ['send', 'text-blue-600'],
+                                    'meeting' => ['video', 'text-purple-600'], 'note' => ['file-text', 'text-amber-600'],
+                                    'follow_up' => ['clock', 'text-rose-600'],
+                                    default => match ($item['event']) { 'status_changed' => ['check-circle-2', 'text-indigo-600'], 'assigned' => ['user-check', 'text-cyan-600'], 'created' => ['sparkles', 'text-indigo-600'], default => ['activity', 'text-slate-500'] },
+                                };
+                            @endphp
                             <div class="relative">
                                 <div class="absolute top-0.5 -left-6 flex size-5 items-center justify-center rounded-full border border-slate-300 bg-white shadow-2xs">
                                     <x-dynamic-component :component="'lucide-'.$icon" class="size-3.25 {{ $tone }}" aria-hidden="true" />
                                 </div>
                                 <div class="rounded-xl border border-slate-200/80 bg-slate-50 p-3.5">
                                     <div class="mb-1 flex items-center justify-between text-2xs text-slate-500">
-                                        <span class="font-semibold text-slate-800">{{ $activity->user?->name ?? 'System' }}</span>
-                                        <x-date :value="$activity->occurred_at" />
+                                        <span class="font-semibold text-slate-800">{{ $item['user'] ?? 'System' }}</span>
+                                        <x-date :value="$item['at']" />
                                     </div>
-                                    <p class="text-xs leading-relaxed font-medium text-slate-700">{{ $activity->description }}</p>
-                                    @if ($activity->outcome)
-                                        <div class="mt-2 rounded border border-slate-200 bg-white p-2 text-2xs text-slate-600"><span class="font-semibold text-slate-700">Outcome:</span> {{ $activity->outcome }}</div>
+                                    <p class="text-xs leading-relaxed font-medium whitespace-pre-line text-slate-700">{{ $item['text'] }}</p>
+                                    @if ($item['outcome'])
+                                        <div class="mt-2 rounded border border-slate-200 bg-white p-2 text-2xs text-slate-600"><span class="font-semibold text-slate-700">Outcome:</span> {{ $item['outcome'] }}</div>
                                     @endif
                                 </div>
                             </div>
                         @endforeach
                     </div>
+                    @if ($timeline->hasPages())
+                        <div class="text-2xs">{{ $timeline->links('partials.pagination') }}</div>
+                    @endif
                 @endif
             </x-tab-panel>
 
-            <x-tab-panel name="notes" x-cloak>
-                <x-empty-state title="Internal notes are coming soon" icon="file-text">Writing timestamped notes on a lead arrives with the next update.</x-empty-state>
+            {{-- Notes --}}
+            <x-tab-panel name="notes" :active="$panelTab === 'notes'" class="space-y-6">
+                @if ($canLog)
+                    <form method="POST" action="{{ route('leads.notes.store', $lead) }}" class="space-y-2" novalidate>
+                        @csrf
+                        <x-textarea name="body" id="new-note" bag="note" label="Add Timestamped Internal Note" rows="3"
+                                    placeholder="Record insights, customer objections, or internal handoff notes…" />
+                        <div class="flex justify-end"><x-button size="sm" loading="Posting…">Post Note</x-button></div>
+                    </form>
+                @endif
+                @if ($lead->notes->isEmpty())
+                    <x-empty-state title="No notes recorded yet" icon="file-text">{{ $canLog ? 'Use the box above to write the first note.' : 'Notes written on this lead will appear here.' }}</x-empty-state>
+                @else
+                    <div class="space-y-3 divide-y divide-slate-100">
+                        @foreach ($lead->notes as $note)
+                            <div class="pt-3 first:pt-0">
+                                <div class="mb-1 flex items-center justify-between gap-2 text-2xs text-slate-500">
+                                    <span class="font-semibold text-slate-800">{{ $note->user?->name ?? 'Former user' }}</span>
+                                    <span class="flex items-center gap-2">
+                                        <x-date :value="$note->created_at" relative />
+                                        @if (auth()->user()->can('updateNote', [\App\Models\Lead::class, $note]))
+                                            <button type="button" x-data="modalTrigger" data-modal="note-{{ $note->id }}" x-on:click="open" class="font-semibold text-indigo-600 hover:text-indigo-800">Edit</button>
+                                        @endif
+                                        @can('deleteNote', [\App\Models\Lead::class, $note])
+                                            <x-confirm-dialog trigger="Delete" trigger-variant="text" trigger-size="sm" class="[&>button]:text-rose-600"
+                                                              :action="route('notes.destroy', $note)" method="DELETE"
+                                                              title="Delete this note by {{ $note->user?->name ?? 'a former user' }}?" confirm="Delete Note" loading="Deleting…">
+                                                It disappears from the lead. The deletion is recorded in the audit log.
+                                            </x-confirm-dialog>
+                                        @endcan
+                                    </span>
+                                </div>
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs whitespace-pre-wrap text-slate-700">{{ $note->body }}</div>
+                            </div>
+                            @if (auth()->user()->can('updateNote', [\App\Models\Lead::class, $note]))
+                                <x-modal name="note-{{ $note->id }}" title="Edit Note" subtitle="You can edit your note for 15 minutes after writing it">
+                                    <form id="note-form-{{ $note->id }}" method="POST" action="{{ route('notes.update', $note) }}" novalidate>
+                                        @csrf @method('PUT')
+                                        <x-textarea name="body" :id="'note-body-'.$note->id" bag="note" label="Note" rows="4" :value="$note->body" required />
+                                    </form>
+                                    <x-slot:footer>
+                                        <x-button type="button" variant="ghost" x-on:click="close">Cancel</x-button>
+                                        <x-button form="note-form-{{ $note->id }}">Save Note</x-button>
+                                    </x-slot:footer>
+                                </x-modal>
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
             </x-tab-panel>
 
-            <x-tab-panel name="followups" x-cloak>
-                <x-empty-state title="Follow-ups are coming soon" icon="clock">Scheduling calls, meetings and check-ins arrives with the next update.</x-empty-state>
+            {{-- Follow-ups --}}
+            <x-tab-panel name="followups" :active="$panelTab === 'followups'" class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-900">Follow-Up Schedule</h3>
+                        <p class="text-2xs text-slate-500">Scheduled touchpoints and commitments</p>
+                    </div>
+                    @if ($canSchedule)
+                        <x-button type="button" size="sm" icon="plus" x-data="modalTrigger" data-modal="schedule-follow-up" x-on:click="open">Schedule Action</x-button>
+                    @endif
+                </div>
+                @if ($lead->followUps->isEmpty())
+                    <x-empty-state title="No follow-ups scheduled for this lead" icon="clock" />
+                @else
+                    <div class="space-y-3">
+                        @foreach ($lead->followUps as $fu)
+                            @include('follow-ups._item', ['fu' => $fu, 'showLead' => false])
+                        @endforeach
+                    </div>
+                @endif
             </x-tab-panel>
 
-            <x-tab-panel name="details" x-cloak class="space-y-6">
+            <x-tab-panel name="details" :active="$panelTab === 'details'" class="space-y-6">
                 <div class="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <h4 class="text-xs font-bold tracking-wider text-slate-800 uppercase">Contact Information</h4>
                     <div class="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
@@ -215,4 +316,5 @@
             </x-tab-panel>
         </div>
     </x-tabs>
+    @include('leads._panel-modals')
 </x-slide-over>
