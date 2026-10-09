@@ -36,6 +36,9 @@ class ProductionGuardTest extends TestCase
             'APP_URL is not set' => ['app.url' => 'http://localhost'],
             'APP_URL must start with https://' => ['app.url' => 'http://crm.hybridmonks.com'],
             'DB_URL is not set' => ['database.connections.pgsql.url' => null],
+            'DB_URL must be the Neon direct connection (host without -pooler)' => [
+                'database.connections.pgsql.url' => 'postgresql://USER:PASSWORD@ep-x-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require',
+            ],
         ];
 
         foreach ($cases as $problem => $override) {

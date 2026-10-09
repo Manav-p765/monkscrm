@@ -32,7 +32,7 @@ Values shown are the exact value to use; "(secret)" means generate or copy it, n
 | `LOG_CHANNEL` | `stderr` | Logs go to Render's log stream (the disk is wiped on restart). Also set in the image. |
 | `LOG_LEVEL` | `warning` | Keeps logs short. Also set in the image. |
 | `DB_CONNECTION` | `pgsql` | PostgreSQL. Also set in the image. |
-| `DB_URL` 🔒 | (secret) | Neon **pooled** connection string (host contains `-pooler`, ends `?sslmode=require`). The app refuses to boot without it. |
+| `DB_URL` 🔒 | (secret) | Neon **direct** connection string (Connect → "Connection pooling" **off**; host has no `-pooler`; ends `?sslmode=require`). The app refuses to boot without it, or with a pooled URL: Neon's pooler (PgBouncer, transaction mode) breaks PHP's prepared statements inside transactions (sign-in fails with "25P02 current transaction is aborted"). |
 | `DB_SSLMODE` | `require` | Encrypted database connection. Also set in the image. |
 | `SESSION_DRIVER` | `database` | Sessions survive restarts (no local disk). Also set in the image. |
 | `SESSION_SECURE_COOKIE` | `true` | Session cookie is only sent over HTTPS. |
@@ -44,7 +44,7 @@ Values shown are the exact value to use; "(secret)" means generate or copy it, n
 
 Set by the image and normally left alone: `CACHE_STORE=database`, `QUEUE_CONNECTION=database`, `PORT=8080`.
 
-Not set in Render: the Neon **direct** (non-pooled) URL. It is only used by `scripts/migrate-production.ps1`
+The same direct URL is used by `scripts/migrate-production.ps1`
 (pasted at a prompt) and by the backup workflow (GitHub secret).
 
 ## APP_KEY
@@ -88,8 +88,8 @@ The error names the setting, never its value (`App\Support\ProductionGuard`).
 
 ## First deploy, in order
 
-1. Neon: confirm the project is in Singapore and copy the **pooled** and **direct** connection strings
-   (Neon Console → Connect, toggle "Connection pooling") into Bitwarden.
+1. Neon: confirm the project is in Singapore and copy the **direct** connection string
+   (Neon Console → Connect, "Connection pooling" off) into Bitwarden. Do not use the pooled one.
 2. Render: create the web service (settings above), add every environment variable, deploy.
 3. Run migrations and the base seeder from your machine: `scripts/migrate-production.ps1` (RUNBOOK.md).
    The app starts without tables but pages fail until this is done.

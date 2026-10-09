@@ -31,8 +31,14 @@ final class ProductionGuard
             $problems[] = 'APP_URL must start with https://';
         }
 
-        if (blank(config('database.connections.'.config('database.default').'.url'))) {
+        $dbUrl = (string) config('database.connections.'.config('database.default').'.url');
+        if ($dbUrl === '') {
             $problems[] = 'DB_URL is not set';
+        } elseif (str_contains((string) parse_url($dbUrl, PHP_URL_HOST), '-pooler.')) {
+            // Neon's pooler is PgBouncer in transaction mode. PDO cleans up prepared statements with a
+            // SQL DEALLOCATE that PgBouncer can't map, which aborts the surrounding transaction
+            // (e.g. the login rate limiter: "25P02 current transaction is aborted").
+            $problems[] = 'DB_URL must be the Neon direct connection (host without -pooler)';
         }
 
         return $problems;

@@ -209,7 +209,7 @@ Store every new value in Bitwarden (replace the old item) and nowhere else.
 `RESEND_API_KEY` → wait for the deploy → "Check email" → delete the old key in Resend.
 
 **Database password:** Neon → `monkcrm` → Roles → the app role (`neondb_owner`) → **Reset password**. Copy the
-new pooled and direct URLs → Render `DB_URL` (pooled) → GitHub secret `NEON_DIRECT_URL` (direct) →
+new **direct** URL → Render `DB_URL` and GitHub secret `NEON_DIRECT_URL` →
 Bitwarden. The app errors until Render's redeploy finishes (about 5 minutes), so do it out of hours.
 
 **R2 token:** Cloudflare → R2 → Manage API tokens → create a new token (same settings) → GitHub secrets
