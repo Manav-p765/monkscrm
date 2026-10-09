@@ -64,7 +64,19 @@ ENV APP_ENV=production \
     SESSION_DRIVER=database \
     CACHE_STORE=database \
     QUEUE_CONNECTION=database \
-    PORT=8080
+    PORT=8080 \
+    XDG_CONFIG_HOME=/config \
+    XDG_DATA_HOME=/data
+
+# The base image gives frankenphp the file capability cap_net_bind_service (to bind ports < 1024).
+# Render runs containers with no-new-privileges and without that capability, so the kernel refuses to
+# exec a binary that demands it ("Operation not permitted", exit 126). We only bind $PORT (> 1024),
+# so remove it. Never add capabilities back.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libcap2-bin \
+    && setcap -r /usr/local/bin/frankenphp \
+    && apt-get purge -y --auto-remove libcap2-bin \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY docker/php.ini "$PHP_INI_DIR/conf.d/zz-app.ini"
