@@ -1,6 +1,9 @@
 // Alpine's CSP build: no eval/new Function, so it works under our strict
 // Content-Security-Policy. Components must be registered here with Alpine.data()
 // and referenced by name in x-data; inline object literals are not supported.
+//
+// Inside a handler, `this.$el` is the element that fired the event (a child button, input, row…),
+// not the component. Read the component's data-* attributes from `this.$root` instead.
 import Alpine from '@alpinejs/csp';
 
 // Sidebar open/closed state on tablet and phone widths.
@@ -42,7 +45,7 @@ Alpine.data('globalSearch', () => ({
             return;
         }
         try {
-            const html = await fetchFragment(this.$el.dataset.liveUrl + '?q=' + encodeURIComponent(term));
+            const html = await fetchFragment(this.$root.dataset.liveUrl + '?q=' + encodeURIComponent(term));
             if (this.$refs.input.value.trim() === term) {
                 this.$refs.results.innerHTML = html;
                 this.open = true;
@@ -81,7 +84,7 @@ Alpine.data('globalSearch', () => ({
 // may be shown: details only for a lead the user can see.
 Alpine.data('duplicateCheck', () => ({
     async check() {
-        const form = this.$el.closest('form') || this.$el;
+        const form = this.$root.closest('form') || this.$root;
         const email = form.querySelector('[name="email"]').value.trim();
         const phone = form.querySelector('[name="phone"]').value.trim();
         if (email.length < 2 && phone.replace(/\D/g, '').length < 6) {
@@ -201,7 +204,7 @@ Alpine.data('kanban', () => ({
 Alpine.data('autoSubmit', () => ({
     submit(event) {
         if (event.target.matches('select, input[type="date"], input[type="checkbox"], input[type="radio"]')) {
-            this.$el.requestSubmit();
+            this.$root.requestSubmit();
         }
     },
 }));
@@ -210,7 +213,7 @@ Alpine.data('autoSubmit', () => ({
 Alpine.data('flash', () => ({
     visible: true,
     init() {
-        if (this.$el.dataset.autoDismiss === 'true') {
+        if (this.$root.dataset.autoDismiss === 'true') {
             setTimeout(() => this.dismiss(), 5000);
         }
     },
@@ -244,25 +247,25 @@ Alpine.data('dropdown', () => ({
 // when the server marks it open (e.g. after a validation error inside it).
 Alpine.data('modal', () => ({
     init() {
-        if (this.$el.dataset.open === 'true') {
+        if (this.$root.dataset.open === 'true') {
             this.$nextTick(() => this.$refs.dialog.showModal());
         }
     },
     handleOpen(event) {
-        if (event.detail === this.$el.dataset.name) {
+        if (event.detail === this.$root.dataset.name) {
             this.$refs.dialog.showModal();
         }
     },
     close() {
-        if (this.$el.dataset.closeHref) {
-            window.location.assign(this.$el.dataset.closeHref);
+        if (this.$root.dataset.closeHref) {
+            window.location.assign(this.$root.dataset.closeHref);
             return;
         }
         this.$refs.dialog.close();
     },
     cancel(event) {
         // Escape: same as the × button (so a modal with its own URL goes back to the list).
-        if (this.$el.dataset.closeHref) {
+        if (this.$root.dataset.closeHref) {
             event.preventDefault();
             this.close();
         }
@@ -273,7 +276,7 @@ Alpine.data('modal', () => ({
 Alpine.data('copyText', () => ({
     copied: false,
     copy() {
-        navigator.clipboard.writeText(this.$el.dataset.text).then(() => {
+        navigator.clipboard.writeText(this.$root.dataset.text).then(() => {
             this.copied = true;
             setTimeout(() => (this.copied = false), 2000);
         });
@@ -285,7 +288,7 @@ Alpine.data('copyText', () => ({
 
 Alpine.data('modalTrigger', () => ({
     open() {
-        this.$dispatch('open-modal', this.$el.dataset.modal);
+        this.$dispatch('open-modal', this.$root.dataset.modal);
     },
 }));
 
@@ -295,7 +298,7 @@ Alpine.data('slideOver', () => ({
         this.$nextTick(() => this.$refs.dialog.showModal());
     },
     close() {
-        window.location.assign(this.$el.dataset.closeHref);
+        window.location.assign(this.$root.dataset.closeHref);
     },
     cancel(event) {
         event.preventDefault();
@@ -313,25 +316,25 @@ Alpine.data('slideOver', () => ({
 Alpine.data('tabs', () => ({
     active: '',
     init() {
-        this.active = this.$el.dataset.active;
+        this.active = this.$root.dataset.active;
     },
 }));
 
 Alpine.data('tabButton', () => ({
     select() {
-        this.active = this.$el.dataset.tab;
+        this.active = this.$root.dataset.tab;
     },
     get selected() {
-        return this.active === this.$el.dataset.tab;
+        return this.active === this.$root.dataset.tab;
     },
     get stateClasses() {
-        return { [this.$el.dataset.on]: this.selected, [this.$el.dataset.off]: !this.selected };
+        return { [this.$root.dataset.on]: this.selected, [this.$root.dataset.off]: !this.selected };
     },
 }));
 
 Alpine.data('tabPanel', () => ({
     get visible() {
-        return this.active === this.$el.dataset.tab;
+        return this.active === this.$root.dataset.tab;
     },
 }));
 
@@ -369,10 +372,10 @@ Alpine.data('sortable', () => ({
     save() {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = this.$el.dataset.reorderUrl;
+        form.action = this.$root.dataset.reorderUrl;
         const token = document.querySelector('meta[name="csrf-token"]').content;
         form.append(Object.assign(document.createElement('input'), { type: 'hidden', name: '_token', value: token }));
-        this.$el.querySelectorAll('[data-id]').forEach((row) => {
+        this.$root.querySelectorAll('[data-id]').forEach((row) => {
             form.append(Object.assign(document.createElement('input'), { type: 'hidden', name: 'ids[]', value: row.dataset.id }));
         });
         document.body.append(form);
@@ -445,7 +448,7 @@ Alpine.data('importRunner', () => ({
     done: 0,
     total: 0,
     init() {
-        if (this.$el.dataset.autostart === 'true') {
+        if (this.$root.dataset.autostart === 'true') {
             this.start();
         }
     },
@@ -455,7 +458,7 @@ Alpine.data('importRunner', () => ({
         const token = document.querySelector('meta[name="csrf-token"]').content;
         for (;;) {
             try {
-                const response = await fetch(this.$el.dataset.url, {
+                const response = await fetch(this.$root.dataset.url, {
                     method: 'POST',
                     headers: { Accept: 'text/plain', 'X-Requested-With': 'fetch', 'X-CSRF-TOKEN': token },
                     credentials: 'same-origin',
@@ -465,7 +468,7 @@ Alpine.data('importRunner', () => ({
                 }
                 const text = (await response.text()).trim();
                 if (text === 'done') {
-                    window.location.assign(this.$el.dataset.doneUrl);
+                    window.location.assign(this.$root.dataset.doneUrl);
                     return;
                 }
                 const [done, total] = text.split('/').map((n) => parseInt(n, 10));
@@ -508,7 +511,7 @@ Alpine.data('passwordReveal', () => ({
 Alpine.data('moreDetails', () => ({
     open: false,
     init() {
-        this.open = this.$el.dataset.open === 'true';
+        this.open = this.$root.dataset.open === 'true';
     },
     toggle() {
         this.open = !this.open;

@@ -23,8 +23,7 @@ class DashboardController extends Controller
             'cards' => $stats->cards(),
             'wonValue' => $stats->wonValue(),
             'pipeline' => $stats->pipeline()->filter(fn ($row) => $row['status']->type->value === 'open' && $row['status']->is_active)->values(),
-            'activeTotals' => \App\Support\Money::totals($stats->leads()->whereIn('lead_status_id',
-                \App\Models\LeadStatus::query()->where('type', 'open')->select('id'))),
+            'activeTotals' => $stats->activeValue(),
             'upcoming' => $stats->followUps()->where('status', FollowUpStatus::Pending)
                 ->with(['lead:id,reference,first_name,last_name,company', 'assignee:id,name'])
                 ->orderBy('due_at')->limit(5)->get(),

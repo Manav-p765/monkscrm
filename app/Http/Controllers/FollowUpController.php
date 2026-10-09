@@ -19,14 +19,14 @@ use Illuminate\View\View;
  */
 class FollowUpController extends Controller
 {
-    public const TABS = ['overdue' => 'Overdue', 'today' => 'Due Today', 'upcoming' => 'Upcoming', 'completed' => 'Completed History'];
+    public const TABS = ['pending' => 'All Pending', 'overdue' => 'Overdue', 'today' => 'Due Today', 'upcoming' => 'Upcoming', 'completed' => 'Completed History'];
 
     public function index(FollowUpListRequest $request): View
     {
         $user = $request->user();
         $canSeeAll = Permissions::allows($user, 'assign-leads');
         $filters = $request->validated();
-        $tab = $filters['tab'] ?? 'overdue';
+        $tab = $filters['tab'] ?? 'pending';
 
         $now = now();
         $endOfToday = Dates::endOfToday();
@@ -37,6 +37,7 @@ class FollowUpController extends Controller
                 ->when($canSeeAll && ! empty($filters['assigned']), fn ($q) => $q->where('assigned_to', $filters['assigned']));
         };
         $scoped = fn (string $t) => match ($t) {
+            'pending' => $base()->where('status', FollowUpStatus::Pending),
             'overdue' => $base()->where('status', FollowUpStatus::Pending)->where('due_at', '<', $now),
             'today' => $base()->where('status', FollowUpStatus::Pending)->where('due_at', '>=', $now)->where('due_at', '<', $endOfToday),
             'upcoming' => $base()->where('status', FollowUpStatus::Pending)->where('due_at', '>=', $endOfToday),

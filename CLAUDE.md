@@ -144,7 +144,7 @@ pages that duplicate a component; if something is missing, extend a component (o
 
 | Component | Use (prototype counterpart) |
 |---|---|
-| `<x-layouts.app title="…" [subtitle] [count] [width]>` | Page shell: sidebar, header (search, alerts bell, user menu), flash, page header from `title`/`subtitle`/`count` + `actions`/`more` slots. `width`: `5xl` / `6xl` / `7xl` (default). |
+| `<x-layouts.app title="…" [subtitle] [count] [width]>` | Page shell: sidebar, header (search, alerts bell, user menu), flash, page header from `title`/`subtitle`/`count` + `actions`/`more`/`badge` slots. `width`: `5xl` / `6xl` / `7xl` (default). |
 | `<x-layouts.guest>` | Sign-in screens (AuthView card). |
 | `<x-page-header>` | Bold title + count chip + subtitle; actions top-right. Rendered by the layout. |
 | `<x-button>` | `variant`: primary / secondary / danger / danger-soft / success / ghost / text / dark; `size`: sm / md / lg; `icon="plus"`; `href` renders a link; `loading="Saving…"`. |
@@ -157,7 +157,7 @@ pages that duplicate a component; if something is missing, extend a component (o
 | `<x-confirm-dialog>` | Every destructive action; title names the item. |
 | `<x-modal name title [subtitle] [size] [:open]>` | Prototype modals. Open with `x-data="modalTrigger" data-modal="name" x-on:click="open"`. `footer` slot. |
 | `<x-slide-over :close-href label>` | Right-hand panel with its own URL (lead detail). `header` slot. |
-| `<x-tabs :tabs [active] variant>` + `<x-tab-panel name>` | `underline` (lead detail), `pills` (settings, quick filters), `segmented` (Table/Pipeline). Items with `href` are link tabs. |
+| `<x-tabs :tabs [active] variant>` + `<x-tab-panel name>` | `underline` (lead detail), `pills` (quick filters, follow-up queues), `subnav` (settings), `segmented` (Table/Pipeline). Items with `href` are link tabs. |
 | `<x-dropdown>` | Menus (bulk actions, user menu). `trigger` slot; `align`, `width`, `up`. |
 | `<x-more-menu>` | Secondary actions in the page header (layout's `more` slot). |
 | `<x-stat label [tone] [hint] [href]>` | Stat card (dashboard, reports, import validation). |

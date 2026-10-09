@@ -8,9 +8,9 @@
     </x-layouts.app>
 
     width: 5xl (settings) | 6xl (dashboard) | 7xl (lists, default).
-    `header` slot replaces the standard page header (e.g. the dashboard greeting).
+    `header` slot replaces the standard page header (e.g. the dashboard greeting); `badge` slot: chip after the title.
 --}}
-@props(['title', 'subtitle' => null, 'count' => null, 'width' => '7xl', 'actions' => null, 'more' => null, 'header' => null])
+@props(['title', 'subtitle' => null, 'count' => null, 'width' => '7xl', 'actions' => null, 'more' => null, 'header' => null, 'badge' => null])
 
 @php
     $user = auth()->user();
@@ -132,7 +132,7 @@
 
             <div class="flex items-center gap-3">
                 {{-- Alerts bell (prototype "Follow-Up Alerts"), computed per request --}}
-                <x-dropdown width="w-80">
+                <x-dropdown width="w-80" :menu="false">
                     <x-slot:trigger>
                         <button type="button" class="relative rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800" aria-haspopup="true">
                             <span class="sr-only">Alerts: {{ $alerts['total'] }}</span>
@@ -219,7 +219,7 @@
                 @if ($header?->isNotEmpty())
                     {{ $header }}
                 @else
-                    <x-page-header :title="$title" :subtitle="$subtitle" :count="$count" :actions="$actions" :more="$more" />
+                    <x-page-header :title="$title" :subtitle="$subtitle" :count="$count" :badge="$badge" :actions="$actions" :more="$more" />
                 @endif
                 {{ $slot }}
             </div>

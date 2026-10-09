@@ -25,7 +25,7 @@
         <table x-on:click="go" @class([
             'w-full text-left border-collapse text-xs',
             '[&_thead_tr]:bg-slate-50/80 [&_thead_tr]:border-b [&_thead_tr]:border-slate-200 [&_thead_tr]:text-slate-500 [&_thead_tr]:font-semibold',
-            '[&_th]:py-3 [&_th]:px-4 [&_th]:whitespace-nowrap [&_th]:font-semibold',
+            '[&_th]:py-3 [&_th]:px-4 [&_th]:font-semibold',
             '[&_td]:py-3.5 [&_td]:px-4 [&_td]:align-middle',
             '[&_tbody]:divide-y [&_tbody]:divide-slate-100 [&_tbody_tr]:transition [&_tbody_tr:hover]:bg-slate-50/80',
             '[&_tr[data-href]]:cursor-pointer',

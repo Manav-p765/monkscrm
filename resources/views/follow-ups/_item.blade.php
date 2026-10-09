@@ -1,11 +1,22 @@
-{{-- One follow-up (prototype panel card / queue row) with its actions. $showLead: show the lead name + link. --}}
+{{--
+    One follow-up with its actions. In the lead panel it is a card; on the Follow-Ups page ($showLead)
+    it is a row of the queue list (prototype TasksFollowUpsView), with the lead name + link.
+--}}
 @php
     $pending = $fu->status === \App\Enums\FollowUpStatus::Pending;
     $overdue = $pending && $fu->due_at->isPast();
-    $today = $pending && ! $overdue && $fu->due_at->copy()->setTimezone(\App\Support\Dates::zone())->isToday();
+    $today = $pending && ! $overdue && \App\Support\Dates::isToday($fu->due_at);
     $canManage = auth()->user()->can('manageFollowUp', [\App\Models\Lead::class, $fu]);
+    $row = $showLead ?? false;
 @endphp
-<div @class(['rounded-xl border p-3.5 transition', 'border-slate-200 bg-slate-50 opacity-70' => ! $pending, 'border-rose-200 bg-rose-50/50' => $overdue, 'border-slate-200 bg-white' => $pending && ! $overdue])>
+<div @class([
+    'p-4 transition hover:bg-slate-50/70 sm:p-5' => $row,
+    'bg-rose-50/20' => $row && $overdue,
+    'rounded-xl border p-3.5 transition' => ! $row,
+    'border-slate-200 bg-slate-50 opacity-70' => ! $row && ! $pending,
+    'border-rose-200 bg-rose-50/50' => ! $row && $overdue,
+    'border-slate-200 bg-white' => ! $row && $pending && ! $overdue,
+])>
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">

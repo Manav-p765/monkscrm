@@ -84,6 +84,23 @@ class LeadStats
         return Money::totals($this->leads()->whereIn('lead_status_id', LeadStatus::query()->where('type', LeadStatusType::Won)->select('id')));
     }
 
+    /** @return array<string, int> currency => minor units for leads in an Open status (the active pipeline) */
+    public function activeValue(): array
+    {
+        return Money::totals($this->leads()->whereIn('lead_status_id', LeadStatus::query()->where('type', LeadStatusType::Open)->select('id')));
+    }
+
+    /** @return array<string, int> currency => average deal value (minor units) of won leads that have one */
+    public function averageDealSize(): array
+    {
+        $averages = $this->leads()->toBase()->whereNotNull('deal_value')
+            ->whereIn('lead_status_id', LeadStatus::query()->where('type', LeadStatusType::Won)->select('id'))
+            ->selectRaw('currency, avg(deal_value) as average')->groupBy('currency')->pluck('average', 'currency')
+            ->map(fn ($avg) => (int) round((float) $avg))->all();
+
+        return Money::totals(null, $averages);
+    }
+
     /** Pipeline strip / report rows: active statuses with count and per-currency totals (2 queries). */
     public function pipeline(): Collection
     {

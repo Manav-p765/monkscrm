@@ -184,6 +184,11 @@ class DataCorrectnessTest extends TestCase
         // Lead 31 (15 Sep) is outside the range.
         $this->assertSame([30, 15, 8, 2, 3, 6], array_column($page->viewData('funnel'), 'count'));
         $this->assertSame(['USD' => 2100000, 'INR' => 42500000], $page->viewData('wonValue'));
+        // Open statuses: $30,850 and ₹5,00,000. Average won deal: ($5,000 + $12,000 + $4,000) / 3 and
+        // (₹1,00,000 + ₹2,50,000 + ₹75,000) / 3 = ₹1,41,666.67.
+        $this->assertSame(['USD' => 3085000, 'INR' => 50000000], $page->viewData('activeValue'));
+        $this->assertSame(['USD' => 700000, 'INR' => 14166667], $page->viewData('averageDealSize'));
+        $page->assertSee('$7,000 · ₹1,41,666.67', false);
         $this->assertSame(['Asha Sales' => 12, 'Ben Sales' => 9, 'Unassigned' => 5, 'Max Manager' => 4],
             $page->viewData('byAssignee')->pluck('count', 'label')->all());
 
@@ -265,6 +270,6 @@ class DataCorrectnessTest extends TestCase
     {
         $page = $this->actingAs($this->a)->get('/follow-ups?tab=today')->assertOk();
         // Due 15:00 and 23:30 IST are today; 00:30 IST tomorrow is upcoming.
-        $this->assertSame(['overdue' => 2, 'today' => 2, 'upcoming' => 1, 'completed' => 0], $page->viewData('counts')->all());
+        $this->assertSame(['pending' => 5, 'overdue' => 2, 'today' => 2, 'upcoming' => 1, 'completed' => 0], $page->viewData('counts')->all());
     }
 }

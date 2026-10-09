@@ -9,13 +9,20 @@
     </x-filter-bar>
     <p class="-mt-3 text-2xs text-slate-500">Leads created between <strong>{{ \App\Support\Dates::day(\App\Support\Dates::fromInput($filters['from'])) }}</strong> and <strong>{{ \App\Support\Dates::day(\App\Support\Dates::fromInput($filters['to'])) }}</strong> (India time).</p>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+    {{-- The prototype's four cards (won, active pipeline, win rate, average deal size), then ours. --}}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <x-stat label="Closed Won Value" tone="emerald" :hint="'Across '.$cards['won'].' won '.\Illuminate\Support\Str::plural('lead', $cards['won'])">
             <x-money :totals="$wonValue" empty="—" class="block text-lg whitespace-normal" />
         </x-stat>
-        <x-stat label="Leads Created" hint="In this date range">{{ number_format($cards['total']) }}</x-stat>
+        <x-stat label="Active Pipeline" tone="indigo" hint="Deal value of leads in open statuses">
+            <x-money :totals="$activeValue" empty="—" class="block text-lg whitespace-normal" />
+        </x-stat>
         @php $closed = $cards['won'] + $cards['lost']; @endphp
         <x-stat label="Win Rate" hint="Won vs. closed (won + lost)">{{ $closed ? round(100 * $cards['won'] / $closed) : 0 }}%</x-stat>
+        <x-stat label="Average Deal Size" hint="Average deal value of won leads">
+            <x-money :totals="$averageDealSize" empty="—" class="block text-lg whitespace-normal" />
+        </x-stat>
+        <x-stat label="Leads Created" hint="In this date range">{{ number_format($cards['total']) }}</x-stat>
         <x-stat label="Follow-Up Completion" hint="Of follow-ups that were due">{{ $completion === null ? '—' : $completion.'%' }}</x-stat>
     </div>
 

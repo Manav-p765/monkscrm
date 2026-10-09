@@ -25,6 +25,8 @@ class ReportController extends Controller
             'filters' => $filters,
             'cards' => $stats->cards(),
             'wonValue' => $stats->wonValue(),
+            'activeValue' => $stats->activeValue(),
+            'averageDealSize' => $stats->averageDealSize(),
             'pipeline' => $stats->pipeline(),
             'funnel' => $stats->funnel(),
             'bySource' => $stats->bySource(),
@@ -45,6 +47,11 @@ class ReportController extends Controller
         return response()->streamDownload(function () use ($stats, $filters) {
             $out = fopen('php://output', 'w');
             Csv::write($out, ['Report', config('app.name'), 'From', $filters['from'], 'To', $filters['to']]);
+            Csv::write($out, []);
+
+            Csv::write($out, ['Closed won value', Money::formatTotals($stats->wonValue())]);
+            Csv::write($out, ['Active pipeline', Money::formatTotals($stats->activeValue())]);
+            Csv::write($out, ['Average deal size', Money::formatTotals($stats->averageDealSize())]);
             Csv::write($out, []);
 
             Csv::write($out, ['Funnel', 'Leads']);

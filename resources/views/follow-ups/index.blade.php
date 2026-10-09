@@ -26,7 +26,7 @@
                 <x-slot:actions><x-button variant="secondary" :href="route('leads.index')">Go to Leads</x-button></x-slot:actions>
             </x-empty-state>
         @else
-            <div class="space-y-3 p-4 sm:p-5">
+            <div class="divide-y divide-slate-100">
                 @foreach ($followUps as $fu)
                     @include('follow-ups._item', ['fu' => $fu, 'showLead' => true])
                 @endforeach

@@ -1,7 +1,8 @@
 {{--
-    Prototype tabs. Three looks, all from the prototype:
+    Prototype tabs. Four looks, all from the prototype:
     - underline: lead detail tabs ("Activity Timeline 3 · Internal Notes 1 …")
-    - pills:     settings sub-tabs and quick filters (dark pill = active)
+    - pills:     quick filters, follow-up queues (bordered; dark pill = active)
+    - subnav:    settings sub-tabs (plain text; dark pill = active)
     - segmented: Table / Pipeline toggle, Import Wizard / Past Imports
 
     Link tabs (server-side, e.g. settings sections or list filters): give each tab an `href`.
@@ -33,6 +34,14 @@
             'tab' => 'flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition',
             'on' => 'bg-slate-900 text-white font-semibold shadow-2xs',
             'off' => 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50',
+            'countOn' => 'bg-white/20 text-white',
+            'countOff' => 'bg-slate-100 text-slate-600',
+        ],
+        'subnav' => [
+            'list' => 'flex items-center gap-2 overflow-x-auto',
+            'tab' => 'flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition',
+            'on' => 'bg-slate-900 text-white shadow-2xs',
+            'off' => 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
             'countOn' => 'bg-white/20 text-white',
             'countOff' => 'bg-slate-100 text-slate-600',
         ],

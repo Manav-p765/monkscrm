@@ -1,4 +1,5 @@
 <x-layouts.app title="Bulk Lead Import" subtitle="Guided 6-step workflow: inspect headers, map fields, validate formatting, and handle duplicates safely">
+    <x-slot:badge><span class="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">CSV &amp; Excel</span></x-slot:badge>
     <x-slot:actions>
         <x-tabs variant="segmented" label="Import views" :tabs="[
             'wizard' => ['label' => 'Import Wizard', 'href' => route('imports.index'), 'active' => $tab === 'wizard'],

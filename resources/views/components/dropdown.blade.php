@@ -8,8 +8,9 @@
     </x-dropdown>
 
     align: right (default) | left.  width: Tailwind width class.  up: open above the trigger.
+    :menu="false": a panel with its own layout (alerts), so links and buttons are not styled as menu rows.
 --}}
-@props(['trigger', 'align' => 'right', 'width' => 'w-48', 'up' => false])
+@props(['trigger', 'align' => 'right', 'width' => 'w-48', 'up' => false, 'menu' => true])
 
 <div x-data="dropdown" x-on:keydown.escape="close" x-on:click.outside="close" class="relative inline-block">
     <div x-on:click="toggle" x-bind:aria-expanded="open">{{ $trigger }}</div>
@@ -19,8 +20,8 @@
              $align === 'left' ? 'left-0' : 'right-0',
              $up ? 'bottom-full mb-2' : 'top-full mt-2',
              $width,
-             '[&_a]:flex [&_a]:w-full [&_a]:items-center [&_a]:gap-2 [&_a]:px-3 [&_a]:py-1.5 [&_a]:text-left [&_a]:text-xs [&_a:hover]:bg-slate-100',
-             '[&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:px-3 [&_button]:py-1.5 [&_button]:text-left [&_button]:text-xs [&_button:hover]:bg-slate-100',
+             '[&_a]:flex [&_a]:w-full [&_a]:items-center [&_a]:gap-2 [&_a]:px-3 [&_a]:py-1.5 [&_a]:text-left [&_a]:text-xs [&_a:hover]:bg-slate-100' => $menu,
+             '[&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:px-3 [&_button]:py-1.5 [&_button]:text-left [&_button]:text-xs [&_button:hover]:bg-slate-100' => $menu,
          ]) }}>
         {{ $slot }}
     </div>

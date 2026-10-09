@@ -169,7 +169,8 @@
                         </div>
                         <div class="mt-0.5 flex items-center gap-1.5 text-2xs text-slate-500">
                             <x-lucide-building class="size-2.75 text-slate-400" aria-hidden="true" />
-                            <span class="truncate">{{ $lead->company ?: 'Individual' }}</span>
+                            {{-- Capped so a long company name doesn't push Deal Value off-screen at 1440px. --}}
+                            <span class="max-w-28 truncate" title="{{ $lead->company }}">{{ $lead->company ?: 'Individual' }}</span>
                             @if ($lead->job_title)<span>· {{ $lead->job_title }}</span>@endif
                         </div>
                     </td>
