@@ -1,8 +1,8 @@
-# Monks CRM: project rules
+# HybridMonks CRM: project rules
 
-**Monks CRM** is the internal lead-management CRM for Hybrid Monks LLP, deployed at https://crm.hybridmonks.com.
+**HybridMonks** is the internal lead-management CRM for Hybrid Monks LLP, deployed at https://crm.hybridmonks.com.
 The product name lives in exactly one place, `APP_NAME` → `config('app.name')`. Never hard-code
-"Monks CRM" in views, emails or code; always use `config('app.name')`.
+"HybridMonks" in views, emails or code; always use `config('app.name')`.
 It holds client lead data. **Security is the top priority:** no data may be reachable
 without authentication and correct authorization. Keep code clean and practical; do not
 over-engineer and do not add packages unless clearly needed.
@@ -146,6 +146,7 @@ pages that duplicate a component; if something is missing, extend a component (o
 |---|---|
 | `<x-layouts.app title="…" [subtitle] [count] [width]>` | Page shell: sidebar, header (search, alerts bell, user menu), flash, page header from `title`/`subtitle`/`count` + `actions`/`more`/`badge` slots. `width`: `5xl` / `6xl` / `7xl` (default). |
 | `<x-layouts.guest>` | Sign-in screens (AuthView card). |
+| `<x-logo class="size-7 rounded-lg">` | Brand logo image (`public/images/logo.png`, decorative). Size and radius from the caller. |
 | `<x-page-header>` | Bold title + count chip + subtitle; actions top-right. Rendered by the layout. |
 | `<x-button>` | `variant`: primary / secondary / danger / danger-soft / success / ghost / text / dark; `size`: sm / md / lg; `icon="plus"`; `href` renders a link; `loading="Saving…"`. |
 | `<x-input>`, `<x-select>`, `<x-textarea>` | Label above ("First Name *"), `hint`, error under the field, `bag`; `size="lg"` + `icon` + `reveal` for sign-in screens; `<x-slot:aside>` next to the label. |
@@ -168,7 +169,7 @@ pages that duplicate a component; if something is missing, extend a component (o
 
 | Term | Meaning / usage |
 |---|---|
-| **Monks CRM** | The product name. Always rendered via `config('app.name')`. Page titles: "Leads · Monks CRM". |
+| **HybridMonks** | The product name. Always rendered via `config('app.name')`. Page titles: "Leads · HybridMonks". Logo: `<x-logo>` (`public/images/logo.png`). |
 | **Lead** | A potential client (person and/or company). Never "contact", "prospect" or "record". |
 | **Status** | Where a lead is in the pipeline (New, Contacted, Won, …). |
 | **Pipeline** | The board of leads in columns by status (Kanban). Sidebar item "Pipeline". |

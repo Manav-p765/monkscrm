@@ -74,7 +74,7 @@ function Backup-WithNeonBranch {
 if ($MyInvocation.InvocationName -eq '.') { return }
 
 try {
-    Write-Host '== Monks CRM: production migration ==' -ForegroundColor Cyan
+    Write-Host '== HybridMonks: production migration ==' -ForegroundColor Cyan
     $script:Php = Find-Php
     $uri = Initialize-ProductionEnv
 

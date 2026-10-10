@@ -25,10 +25,29 @@ class UiShellTest extends TestCase
             ->assertSee('<title>Lead Directory · Renamed CRM</title>', false);
     }
 
-    public function test_default_product_name_is_monks_crm(): void
+    public function test_default_product_name_is_hybridmonks(): void
     {
-        $this->assertStringContainsString('APP_NAME="Monks CRM"', file_get_contents(base_path('.env.example')));
-        $this->assertStringContainsString("env('APP_NAME', 'Monks CRM')", file_get_contents(config_path('app.php')));
+        $this->assertStringContainsString('APP_NAME="HybridMonks"', file_get_contents(base_path('.env.example')));
+        $this->assertStringContainsString("env('APP_NAME', 'HybridMonks')", file_get_contents(config_path('app.php')));
+    }
+
+    public function test_brand_logo_and_icons_are_on_sign_in_app_and_error_pages(): void
+    {
+        foreach (['images/logo.png', 'images/favicon-32.png', 'images/apple-touch-icon.png', 'favicon.ico'] as $file) {
+            $this->assertGreaterThan(0, filesize(public_path($file)), "{$file} is missing or empty");
+        }
+
+        $this->get('/login')->assertOk()
+            ->assertSee('src="'.asset('images/logo.png').'"', false)
+            ->assertSee('rel="icon"', false)
+            ->assertDontSee('>CRM</', false);
+
+        $this->actingAs(User::factory()->sales()->create())->get('/dashboard')->assertOk()
+            ->assertSee('src="'.asset('images/logo.png').'"', false)
+            ->assertDontSee('>CRM</', false);
+
+        $this->get('/no-such-page')->assertNotFound()
+            ->assertSee('src="'.asset('images/logo.png').'"', false);
     }
 
     public function test_every_page_has_one_h1_title_and_no_inline_styles_or_submit_buttons(): void

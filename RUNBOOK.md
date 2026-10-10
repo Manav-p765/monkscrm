@@ -1,4 +1,4 @@
-# Monks CRM runbook
+# HybridMonks runbook
 
 Short, practical steps for running production. Settings and first deploy: [docs/DEPLOY.md](docs/DEPLOY.md).
 Production: Render web service (Docker, free tier: no shell) + Neon project `monkcrm` (Singapore, branch
@@ -59,7 +59,7 @@ notifications for failed workflows only").
 winget install FiloSottile.age
 age-keygen -o backup-age.key        # prints "Public key: age1..."
 ```
-- Bitwarden: new **Secure note** "Monks CRM – backup age key", paste the whole file content (the
+- Bitwarden: new **Secure note** "HybridMonks – backup age key", paste the whole file content (the
   `AGE-SECRET-KEY-1...` line and the public key). **Two people** must hold it: share it into a Bitwarden
   collection both can open, and have the second person confirm they can see it.
 - Then delete the file: `Remove-Item backup-age.key`. Losing every copy of this key = losing every backup.
@@ -70,7 +70,7 @@ age-keygen -o backup-age.key        # prints "Public key: age1..."
 2. R2 → **Manage API tokens** → **Create API token** (Account API token): permission **Object Read & Write**,
    **Apply to specific buckets only** → `monks-crm-backups`, TTL forever. Create.
 3. Copy the **Access Key ID**, **Secret Access Key** and your **Account ID** (R2 overview page, right side).
-   They are shown once. Store them in Bitwarden ("Monks CRM – R2 backup token").
+   They are shown once. Store them in Bitwarden ("HybridMonks – R2 backup token").
 
 **3. GitHub secrets** (repo → Settings → Secrets and variables → Actions → New repository secret):
 
@@ -127,7 +127,7 @@ branch automatically → Restore. The connection strings don't change; the app r
 **Uptime (UptimeRobot, free):**
 1. uptimerobot.com → sign up with a shared admin mailbox → **New monitor**.
 2. Type **Keyword**, URL `https://crm.hybridmonks.com/healthz`, keyword `ok` (alert when *not* present),
-   interval **5 minutes**. Friendly name "Monks CRM".
+   interval **5 minutes**. Friendly name "HybridMonks".
 3. Alert contacts: the admins' email addresses (add a second person). Save.
 4. `/healthz` never touches the database, so monitoring does not keep Neon awake or use its compute hours.
    It does keep the Render free instance from spinning down (Render's 750 free hours/month cover one

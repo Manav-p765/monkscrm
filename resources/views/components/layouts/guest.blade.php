@@ -12,7 +12,7 @@
 <body class="min-h-full bg-slate-100 font-sans text-slate-900">
     <div class="flex min-h-screen flex-col justify-center px-4 py-10 sm:px-6 lg:px-8">
         <div class="text-center sm:mx-auto sm:w-full sm:max-w-md">
-            <div class="mb-3 inline-flex size-12 items-center justify-center rounded-xl bg-indigo-600 text-lg font-bold text-white shadow-sm" aria-hidden="true">CRM</div>
+            <x-logo class="mx-auto mb-3 size-12 rounded-xl shadow-sm" />
             <p class="text-2xl font-bold tracking-tight text-slate-900">{{ config('app.name') }}</p>
             <p class="mt-1.5 text-sm text-slate-600">Simple, organized lead tracking and follow-up management</p>
         </div>

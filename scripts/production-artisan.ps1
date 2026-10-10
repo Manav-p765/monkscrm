@@ -28,7 +28,7 @@ try {
         Set-ProcessEnv 'RESEND_API_KEY' (Read-Secret 'RESEND_API_KEY').Trim()
         Set-ProcessEnv 'MAIL_MAILER' 'resend'
         Set-ProcessEnv 'MAIL_FROM_ADDRESS' 'noreply@hybridmonks.com'
-        Set-ProcessEnv 'MAIL_FROM_NAME' 'Monks CRM'
+        Set-ProcessEnv 'MAIL_FROM_NAME' 'HybridMonks'
     }
 
     Write-Host ''

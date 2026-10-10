@@ -37,7 +37,7 @@
            class="fixed inset-y-0 left-0 z-40 flex w-60 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform select-none lg:translate-x-0">
         <div class="flex h-16 items-center justify-between border-b border-slate-100 px-5">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5">
-                <span class="flex size-7 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold tracking-wider text-white shadow-xs" aria-hidden="true">CRM</span>
+                <x-logo class="size-7 rounded-lg shadow-xs" />
                 <span>
                     <span class="block text-sm leading-tight font-bold text-slate-900">{{ config('app.name') }}</span>
                     <span class="block text-2xs text-slate-500">Internal Management</span>
