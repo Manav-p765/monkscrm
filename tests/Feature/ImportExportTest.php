@@ -293,6 +293,34 @@ class ImportExportTest extends TestCase
         $this->post("/imports/{$import->id}/undo")->assertSessionHas('error'); // only once
     }
 
+    public function test_wizard_labels_counts_and_template_name_render_correctly(): void
+    {
+        // Found in the browser test: the validation card showed "Ready &amp; Valid" (escaped twice).
+        $import = $this->upload($this->csv([self::HEADER, ['Ann Lee', 'Acme', 'ann@x.com', '', '', '', '', '', '', '', '']]));
+        $this->get("/imports/{$import->id}?step=validate")->assertOk()
+            ->assertSee('Ready &amp; Valid', false)
+            ->assertDontSee('&amp;amp;', false);
+
+        // The template is named after the product (APP_NAME), never a hard-coded name.
+        config(['app.name' => 'Hybrid Test']);
+        $this->get('/imports/template.csv')->assertOk()
+            ->assertDownload('hybrid-test-import-template.csv');
+    }
+
+    public function test_undo_message_groups_thousands(): void
+    {
+        $rows = [self::HEADER];
+        for ($i = 1; $i <= 1001; $i++) {
+            $rows[] = ["Bulk {$i}", 'Acme', "bulk{$i}@x.com", '', '', '', '', '', '', '', ''];
+        }
+        $import = $this->upload($this->csv($rows));
+        $this->post("/imports/{$import->id}/strategy", ['strategy' => 'skip']);
+        $this->runAll($import);
+
+        $this->post("/imports/{$import->id}/undo")->assertRedirect()
+            ->assertSessionHas('status', fn ($m) => str_starts_with($m, '1,001 imported leads archived'));
+    }
+
     public function test_undo_is_not_possible_after_24_hours(): void
     {
         $import = $this->upload($this->csv([self::HEADER, ['Ann Lee', 'Acme', 'ann@x.com', '', '', '', '', '', '', '', '']]));

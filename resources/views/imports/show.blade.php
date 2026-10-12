@@ -110,7 +110,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     <x-stat label="Total Rows">{{ number_format($import->total_rows) }}</x-stat>
-                    <x-stat label="Ready &amp; Valid" tone="emerald">{{ number_format($import->valid_rows) }}</x-stat>
+                    <x-stat label="Ready & Valid" tone="emerald">{{ number_format($import->valid_rows) }}</x-stat>
                     <x-stat label="Potential Duplicates" tone="amber">{{ number_format($import->duplicate_rows) }}</x-stat>
                     <x-stat label="Invalid / Malformed" tone="rose">{{ number_format($import->invalid_rows) }}</x-stat>
                 </div>

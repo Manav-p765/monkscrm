@@ -181,7 +181,7 @@ class ImportController extends Controller
         $kept = count($result['kept']);
 
         return redirect()->route('imports.index', ['tab' => 'history'])->with('status',
-            "{$result['archived']} imported ".str('lead')->plural($result['archived']).' archived'
+            number_format($result['archived']).' imported '.str('lead')->plural($result['archived']).' archived'
             .($kept ? " · {$kept} kept because they were edited since: ".implode(', ', array_slice($result['kept'], 0, 10)).($kept > 10 ? '…' : '') : ''));
     }
 
@@ -213,7 +213,7 @@ class ImportController extends Controller
             Csv::write($out, ['First Name', 'Last Name', 'Company', 'Job Title', 'Email', 'Phone', 'Status', 'Source', 'Priority', 'Assigned To', 'Tags', 'Deal Value', 'Currency', 'City', 'State', 'Country', 'Notes']);
             Csv::write($out, ['Priya', 'Shah', 'Acme Pvt Ltd', 'Head of Operations', 'priya.shah@example.com', '+91 98765 43210', 'New', 'Referral', 'High', '', 'Hot Lead', '250000', 'INR', 'Pune', 'Maharashtra', 'India', 'Met at the expo']);
             fclose($out);
-        }, 'monks-crm-import-template.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+        }, str(config('app.name'))->slug().'-import-template.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     /** Only the importer and admins see an import; optionally require one of these statuses. */
