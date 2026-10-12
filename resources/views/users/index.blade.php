@@ -285,9 +285,15 @@
                     </div>
                     <p class="text-2xs text-slate-500">
                         {{ $credential['kind'] === 'invite' ? 'Works once and expires in 48 hours.' : 'Works once and expires in 30 minutes.' }}
-                        It won't be shown again. We've also emailed it to them.
+                        It won't be shown again.@if ($credential['emailed'] ?? false) We've also emailed it to them.@endif
                     </p>
                 </div>
+                @unless ($credential['emailed'] ?? false)
+                    <div role="alert" class="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                        <x-lucide-alert-triangle class="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden="true" />
+                        <p><span class="font-bold">We couldn't send the email.</span> Copy the link above and share it privately.</p>
+                    </div>
+                @endunless
                 <x-slot:footer>
                     <x-button type="button" variant="ghost" x-on:click="close">Done</x-button>
                 </x-slot:footer>

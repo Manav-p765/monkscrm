@@ -15,6 +15,10 @@ use App\Http\Requests\UserListRequest;
 use App\Models\Team;
 use App\Models\User;
 use App\Notifications\InviteUser;
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 use App\Support\Audit;
 use App\Support\Permissions;
 use App\Support\Settings;
@@ -74,13 +78,12 @@ class UserController extends Controller
         $user->save();
 
         $url = $user->createInviteLink();
-        defer(fn () => $user->notify(new InviteUser($url)));
-
         Audit::log('user.invited', $user, ['role' => $user->role->value, 'team_id' => $user->team_id]);
+        $emailed = $this->sendNow($user, new InviteUser($url), 'invite');
 
         return redirect()->route('users.index')
-            ->with('status', "Invite sent to {$user->name}")
-            ->with('credential_link', $this->sealLink($user, $url, 'invite'));
+            ->with('status', $emailed ? "Invite sent to {$user->name}" : "Invite created for {$user->name}")
+            ->with('credential_link', $this->sealLink($user, $url, 'invite', $emailed));
     }
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
@@ -115,12 +118,12 @@ class UserController extends Controller
         Gate::authorize('resendInvite', $user);
 
         $url = $user->createInviteLink();
-        defer(fn () => $user->notify(new InviteUser($url)));
         Audit::log('user.invite_resent', $user);
+        $emailed = $this->sendNow($user, new InviteUser($url), 'invite');
 
         return redirect()->route('users.index')
-            ->with('status', "New invite sent to {$user->name}")
-            ->with('credential_link', $this->sealLink($user, $url, 'invite'));
+            ->with('status', $emailed ? "New invite sent to {$user->name}" : "New invite created for {$user->name}")
+            ->with('credential_link', $this->sealLink($user, $url, 'invite', $emailed));
     }
 
     public function sendPasswordReset(User $user): RedirectResponse
@@ -129,12 +132,12 @@ class UserController extends Controller
 
         $token = Password::broker()->createToken($user);
         $url = route('password.reset', ['token' => $token, 'email' => $user->email]);
-        $user->sendPasswordResetNotification($token);
         Audit::log('user.password_reset_link_sent', $user);
+        $emailed = $this->sendNow($user, new ResetPassword($token), 'reset');
 
         return redirect()->route('users.index')
-            ->with('status', "Password reset link sent to {$user->name}")
-            ->with('credential_link', $this->sealLink($user, $url, 'reset'));
+            ->with('status', $emailed ? "Password reset link sent to {$user->name}" : "Password reset link created for {$user->name}")
+            ->with('credential_link', $this->sealLink($user, $url, 'reset', $emailed));
     }
 
     public function disableTwoFactor(User $user): RedirectResponse
@@ -239,13 +242,33 @@ class UserController extends Controller
      * The set-password / reset link is shown once in the credentials card so an admin can share it
      * privately if email isn't working. It travels encrypted in the flash data (one request only).
      */
-    private function sealLink(User $user, string $url, string $kind): string
+    private function sealLink(User $user, string $url, string $kind, bool $emailed): string
     {
-        return Crypt::encryptString(json_encode(['name' => $user->name, 'email' => $user->email, 'url' => $url, 'kind' => $kind]));
+        return Crypt::encryptString(json_encode(['name' => $user->name, 'email' => $user->email, 'url' => $url, 'kind' => $kind, 'emailed' => $emailed]));
     }
 
     /**
-     * @return array{name: string, email: string, url: string, kind: string}|null
+     * Sends an invite or reset email inside the request, so the credentials card can say whether it went out.
+     * The link was already created and is shown on the card either way. A failure (e.g. Resend "domain is
+     * not verified") is logged and audited without the link, token or email address.
+     */
+    private function sendNow(User $user, Notification $notification, string $kind): bool
+    {
+        try {
+            $user->notifyNow($notification);
+
+            return true;
+        } catch (Throwable $e) {
+            $reason = Str::limit(preg_replace(['/\S+@\S+/', '/https?:\/\/\S+/'], ['[email]', '[url]'], $e->getMessage()), 300);
+            Log::warning('Could not send the '.$kind.' email', ['user_id' => $user->id, 'error' => class_basename($e).': '.$reason]);
+            Audit::log('user.invite_email_failed', $user, ['kind' => $kind, 'error' => class_basename($e)]);
+
+            return false;
+        }
+    }
+
+    /**
+     * @return array{name: string, email: string, url: string, kind: string, emailed?: bool}|null
      */
     private function openLink(?string $sealed): ?array
     {

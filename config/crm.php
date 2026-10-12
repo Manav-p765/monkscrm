@@ -51,6 +51,7 @@ return [
         'auth.forced_logout_inactive' => 'Signed out (account deactivated)',
         'user.invited' => 'Invited a user',
         'user.invite_resent' => 'Resent an invite',
+        'user.invite_email_failed' => 'Could not email an invite or reset link',
         'user.updated' => 'Updated a user',
         'user.role_changed' => 'Changed a user’s role',
         'user.deactivated' => 'Deactivated a user',
