@@ -57,12 +57,12 @@ Fixed: the importer could put leads in a turned-off status/source; "create unkno
 turned-off name with different case; the importer relied on mass-assignment protection to drop
 internal keys (crashed in seeders/tinker).
 
-**Decisions for Kartik** (numbers are correct for the current definitions, but the definitions may
-not be what you want):
-- *Contacted* = "a call/email/meeting/SMS was logged or the lead reached the Contacted status". A
-  call logged as "No answer" counts, so Attempted Contact leads show as contacted (66 of 90 in the demo).
-- The funnel is not cumulative: a lead moved straight from New to Won counts as Won but not as
-  Contacted/Qualified, so a later step can be larger than an earlier one.
+**Decided (2026-10-12):**
+- *Contacted* = "a call/email/meeting/SMS that reached the person was logged, or the lead reached the
+  Contacted status". Outcomes such as "No answer", "Left voicemail", "Busy", "Unreachable" or "Bounced"
+  stay on the timeline but do not count (`ActivityLogger::isNoAnswer()`, whole-word match).
+- The funnel is cumulative: a lead counts at every step up to the furthest one it reached, so a lead
+  moved straight from New to Won counts as Contacted, Qualified, Meeting, Proposal and Won.
 
 ## 4. Visual (docs/build-screens/review/ vs docs/design-screens/)
 
@@ -92,4 +92,4 @@ per run). The demo admin must set up two-step sign-in at first sign-in (Step 7 r
    tests; five JS features were silently broken while all PHP tests passed.
 2. `TRUSTED_PROXIES=*` on Render (docs/DEPLOY.md). Without it every user shares the proxy IP and the
    new per-IP limits would lock out the whole office together.
-3. A decision on the two "Contacted"/funnel definitions above before anyone reports on them.
+3. ~~A decision on the two "Contacted"/funnel definitions~~ Decided 2026-10-12 (section 3).

@@ -144,11 +144,19 @@ class LeadStats
         return $counts->map(fn ($n, $id) => ['label' => $id ? ($names[$id] ?? 'Former team') : 'No team', 'count' => (int) $n])->sortByDesc('count')->values();
     }
 
-    /** Funnel from the milestone timestamps (leads created in range that ever reached each step). */
+    /**
+     * Cumulative funnel from the milestone timestamps: a lead counts at every step up to the furthest one it
+     * reached (New → Won counts as Contacted, Qualified, Meeting, Proposal and Won), so steps never grow
+     * left to right. Lost is not a step; lost leads count up to the steps they reached.
+     */
     public function funnel(): array
     {
-        $r = $this->leads()->toBase()->selectRaw('count(*) as created, count(first_contacted_at) as contacted, count(qualified_at) as qualified,
-            count(meeting_booked_at) as meeting, count(proposal_sent_at) as proposal, count(won_at) as won')->first();
+        $r = $this->leads()->toBase()->selectRaw('count(*) as created,
+            count(coalesce(first_contacted_at, qualified_at, meeting_booked_at, proposal_sent_at, won_at)) as contacted,
+            count(coalesce(qualified_at, meeting_booked_at, proposal_sent_at, won_at)) as qualified,
+            count(coalesce(meeting_booked_at, proposal_sent_at, won_at)) as meeting,
+            count(coalesce(proposal_sent_at, won_at)) as proposal,
+            count(won_at) as won')->first();
 
         return [
             ['label' => 'Created', 'count' => (int) $r->created],

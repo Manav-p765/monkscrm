@@ -97,7 +97,7 @@ class DashboardReportsTest extends TestCase
         $this->fixture();
         $page = $this->actingAs($this->admin)->get('/reports?from=2026-10-01&to=2026-10-08')->assertOk();
 
-        $this->assertSame([5, 3, 2, 0, 0, 2], array_column($page->viewData('funnel'), 'count'));
+        $this->assertSame([5, 3, 3, 2, 2, 2], array_column($page->viewData('funnel'), 'count')); // cumulative: won leads count at every earlier step
         $this->assertSame(['Referral' => 5], $page->viewData('bySource')->pluck('count', 'label')->all());
         $this->assertSame(['Sam Sales' => 4, 'Olive Other' => 1], $page->viewData('byAssignee')->pluck('count', 'label')->all());
         $this->assertEqualsCanonicalizing(['North' => 4, 'No team' => 1], $page->viewData('byTeam')->pluck('count', 'label')->all());

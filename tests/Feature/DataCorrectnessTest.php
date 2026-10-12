@@ -181,8 +181,9 @@ class DataCorrectnessTest extends TestCase
     {
         $page = $this->actingAs($this->manager)->get('/reports?from=2026-10-01&to=2026-10-08')->assertOk();
 
-        // Lead 31 (15 Sep) is outside the range.
-        $this->assertSame([30, 15, 8, 2, 3, 6], array_column($page->viewData('funnel'), 'count'));
+        // Lead 31 (15 Sep) is outside the range. The funnel is cumulative (a lead counts at every step up to the
+        // furthest it reached): furthest step none 13, Contacted 5, Qualified 3, Meeting 1, Proposal 2, Won 6.
+        $this->assertSame([30, 17, 12, 9, 8, 6], array_column($page->viewData('funnel'), 'count'));
         $this->assertSame(['USD' => 2100000, 'INR' => 42500000], $page->viewData('wonValue'));
         // Open statuses: $30,850 and ₹5,00,000. Average won deal: ($5,000 + $12,000 + $4,000) / 3 and
         // (₹1,00,000 + ₹2,50,000 + ₹75,000) / 3 = ₹1,41,666.67.
@@ -205,7 +206,7 @@ class DataCorrectnessTest extends TestCase
 
         // A range that only holds lead 31.
         $sept = $this->get('/reports?from=2026-09-15&to=2026-09-15')->assertOk();
-        $this->assertSame([1, 0, 0, 0, 0, 1], array_column($sept->viewData('funnel'), 'count'));
+        $this->assertSame([1, 1, 1, 1, 1, 1], array_column($sept->viewData('funnel'), 'count'));
         $this->assertSame(['USD' => 99900], $sept->viewData('wonValue'));
     }
 

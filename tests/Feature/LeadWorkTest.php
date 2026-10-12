@@ -94,6 +94,40 @@ class LeadWorkTest extends TestCase
 
     // ---- Activities ----------------------------------------------------------------------------
 
+    public function test_a_call_that_did_not_reach_the_person_is_logged_but_does_not_count_as_contact(): void
+    {
+        Carbon::setTestNow('2026-10-08 06:00:00'); // 11:30 IST
+        $lead = $this->lead($this->sales);
+
+        foreach (['No answer', 'Left voicemail.', 'busy - call back later', "Didn't answer", 'Email bounced'] as $outcome) {
+            $this->actingAs($this->sales)->post("/leads/{$lead->reference}/activities", [
+                'type' => 'call', 'occurred_at' => '2026-10-08T10:15', 'description' => 'Tried calling', 'outcome' => $outcome,
+            ])->assertSessionHasNoErrors();
+        }
+
+        $lead->refresh();
+        $this->assertSame(5, Activity::where('meta->event', 'logged')->count(), 'still on the timeline');
+        $this->assertNull($lead->first_contacted_at);
+        $this->assertNull($lead->last_contacted_at);
+        $this->assertSame('2026-10-08 04:45:00', $lead->last_activity_at->toDateTimeString());
+
+        // A call that reached them does count ("Business" and "answers" are not "busy" / "no answer").
+        $this->post("/leads/{$lead->reference}/activities", [
+            'type' => 'call', 'occurred_at' => '2026-10-08T11:05', 'description' => 'Spoke to the owner', 'outcome' => 'Business owner keen; send answers by email',
+        ])->assertSessionHasNoErrors();
+        $this->assertSame('2026-10-08 05:35:00', $lead->fresh()->first_contacted_at->toDateTimeString());
+    }
+
+    public function test_no_answer_phrases_match_whole_words_only(): void
+    {
+        foreach (['No answer', 'NO ANSWER!', 'no-answer', 'left a voice mail', 'Not reachable', 'phone switched off', 'No show', 'didn’t pick up'] as $text) {
+            $this->assertTrue(\App\Services\Leads\ActivityLogger::isNoAnswer($text), $text);
+        }
+        foreach ([null, '', 'Answered all questions', 'Business case agreed', 'Sent the answer key', 'Responded quickly', 'Showed interest'] as $text) {
+            $this->assertFalse(\App\Services\Leads\ActivityLogger::isNoAnswer($text), (string) $text);
+        }
+    }
+
     public function test_logging_a_call_updates_contact_dates_in_ist(): void
     {
         Carbon::setTestNow('2026-10-08 06:00:00'); // 11:30 IST
