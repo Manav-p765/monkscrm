@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Support\LostConnectionDetector;
 use App\Support\Permissions;
+use Illuminate\Contracts\Database\LostConnectionDetector as LostConnectionDetectorContract;
 use App\Support\ProductionGuard;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -19,7 +21,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Recognise Neon's idle-shutdown errors so Laravel reconnects (outside transactions).
+        $this->app->singleton(LostConnectionDetectorContract::class, LostConnectionDetector::class);
     }
 
     public function boot(): void
