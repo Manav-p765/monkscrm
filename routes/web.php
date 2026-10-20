@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     // Leads. {lead} binds by reference through Lead::visibleTo(): invisible leads are 404.
     Route::middleware('can:viewAny,'.Lead::class)->group(function () {

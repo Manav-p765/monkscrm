@@ -53,6 +53,7 @@ return [
         'user.invite_resent' => 'Resent an invite',
         'user.invite_email_failed' => 'Could not email an invite or reset link',
         'user.updated' => 'Updated a user',
+        'profile.updated' => 'Updated their own profile',
         'user.role_changed' => 'Changed a user’s role',
         'user.deactivated' => 'Deactivated a user',
         'user.reactivated' => 'Reactivated a user',

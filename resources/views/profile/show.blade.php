@@ -10,11 +10,20 @@
                 <span class="rounded border border-indigo-200 bg-indigo-50 px-1.5 text-3xs font-bold tracking-wider text-indigo-700 uppercase">{{ $user->role->value }}</span>
             </div>
         </div>
-        <dl class="grid grid-cols-1 gap-x-8 gap-y-4 text-xs sm:grid-cols-2">
-            <div>
-                <dt class="text-3xs font-semibold text-slate-500 uppercase">Full Name</dt>
-                <dd class="mt-0.5 font-medium text-slate-800">{{ $user->name }}</dd>
+        <form method="POST" action="{{ route('profile.update') }}" class="max-w-lg space-y-4" novalidate>
+            @csrf
+            @method('PUT')
+
+            <x-input name="name" label="Full Name" bag="updateProfile" :value="$user->name" required autocomplete="name" />
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <x-input name="phone" type="tel" label="Direct Phone" bag="updateProfile" :value="$user->phone" autocomplete="tel" />
+                <x-input name="job_title" label="Job Title" bag="updateProfile" :value="$user->job_title" autocomplete="organization-title" />
             </div>
+
+            <x-button loading="Saving…">Update Profile</x-button>
+        </form>
+
+        <dl class="grid grid-cols-1 gap-x-8 gap-y-4 border-t border-slate-100 pt-4 text-xs sm:grid-cols-2">
             <div>
                 <dt class="text-3xs font-semibold text-slate-500 uppercase">Email (Account Identity)</dt>
                 <dd class="mt-0.5 font-medium text-slate-800">{{ $user->email }}</dd>
@@ -28,7 +37,7 @@
                 <dd class="mt-0.5 font-medium text-slate-800"><x-date :value="$user->last_login_at" empty="Never" /></dd>
             </div>
         </dl>
-        <p class="text-xs text-slate-500">To change your name or email address, ask an administrator.</p>
+        <p class="text-xs text-slate-500">To change your email address, role or team, ask an administrator.</p>
     </section>
 
     {{-- Change password --}}

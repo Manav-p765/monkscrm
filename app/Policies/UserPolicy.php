@@ -29,6 +29,12 @@ class UserPolicy
         return Permissions::allows($actor, 'manage-users');
     }
 
+    /** My Profile: anyone edits their own name, job title and phone, never someone else's. */
+    public function updateProfile(User $actor, User $target): bool
+    {
+        return $actor->is($target);
+    }
+
     public function changeRole(User $actor, User $target, Role $newRole): Response
     {
         if (! Permissions::allows($actor, 'manage-users')) {
