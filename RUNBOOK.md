@@ -192,7 +192,7 @@ Admins without two-step sign-in can only reach My Profile until they set it up.
 1. Users → the user → **Deactivate**: choose who takes over their leads and follow-ups. Their sessions end
    immediately and they can no longer sign in (users are never deleted; history stays).
 2. If they had access to any of these, remove it: Bitwarden collection, GitHub repo, Render, Neon,
-   Cloudflare, Resend, UptimeRobot, Vercel DNS.
+   Cloudflare, Resend, UptimeRobot, Hostinger (DNS).
 3. If they could see any secret (Bitwarden), rotate those secrets (below).
 
 ## Rotate secrets

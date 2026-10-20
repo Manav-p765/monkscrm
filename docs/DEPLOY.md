@@ -2,7 +2,7 @@
 
 Production is a **Render** web service (Docker, free tier) running the image built from `Dockerfile`, with a
 **Neon** PostgreSQL project `monkcrm` (AWS Singapore, branch `production`, database `neondb`). DNS is at
-**Vercel**, email goes through **Resend**. Day-to-day operations are in [RUNBOOK.md](../RUNBOOK.md).
+**Hostinger**, email goes through **Resend**. Day-to-day operations are in [RUNBOOK.md](../RUNBOOK.md).
 
 **Never paste a secret into chat, a ticket, a commit or a file in this repo.** Secrets live in two places only:
 Render's environment settings (what the app uses) and Bitwarden (the copy we can recover from).
@@ -74,14 +74,19 @@ With `APP_ENV=production` the app refuses to start (and Render shows the error i
 `APP_KEY`, `APP_URL` or `DB_URL` is missing, `APP_DEBUG` is true, or `APP_URL` is not `https://`.
 The error names the setting, never its value (`App\Support\ProductionGuard`).
 
-## DNS (Vercel) and email domain (Resend)
+## DNS (Hostinger) and email domain (Resend)
+
+DNS records are edited in Hostinger: hPanel → **Domains** → `hybridmonks.com` → **DNS / Nameservers** →
+DNS records (nameservers `ns1/ns2.dns-parking.com`). In the *Name* field, enter only the part before
+`.hybridmonks.com` (`crm`, `send`, `resend._domainkey`).
 
 1. Render → service → **Settings → Custom Domains** → add `crm.hybridmonks.com`. Render shows a CNAME target
    (`<service>.onrender.com`).
-2. Vercel → the `hybridmonks.com` domain → **DNS Records** → add `CNAME`, name `crm`, value the Render target.
+2. Hostinger DNS → add `CNAME`, name `crm`, value the Render target.
    Render issues the HTTPS certificate once DNS resolves (minutes to an hour).
 3. Resend → **Domains → Add domain** `hybridmonks.com` (region: Tokyo `ap-northeast-1` is closest) → add the
-   records it lists (SPF `TXT`/`MX` on `send`, DKIM `TXT` on `resend._domainkey`) in Vercel DNS → **Verify**.
+   records it lists (SPF `TXT`/`MX` on `send`, DKIM `TXT` on `resend._domainkey`) in Hostinger DNS → **Verify**.
+   The root domain's MX/SPF belong to Google Workspace mail: leave them alone.
    Add a DMARC record if the domain has none: `TXT` `_dmarc` = `v=DMARC1; p=none;`.
 4. Resend → **API Keys → Create**: permission **Sending access**, domain `hybridmonks.com`. Copy it into Render
    (`RESEND_API_KEY`) and Bitwarden.
