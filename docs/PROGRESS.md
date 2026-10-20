@@ -89,7 +89,7 @@
   from `config('crm.permissions')`, which also generates the gates).
 - Tests: SQLite 124 passed + 1 skipped; PostgreSQL 125/125.
 - Not done from the original plan: editing your own name/phone/job title on My Profile (admins edit
-  them on the Users page). Moved to Step 3.
+  them on the Users page). Done 2026-10-20 (see the end of this file).
 
 Steps 3–6 follow `docs/OVERNIGHT_PLAN.md`; progress in `docs/OVERNIGHT_LOG.md`.
 
@@ -128,7 +128,7 @@ Steps 3–6 follow `docs/OVERNIGHT_PLAN.md`; progress in `docs/OVERNIGHT_LOG.md`
 - Export CSV (filtered or selected; formula-escaped; includes deal value + currency); audited.
 
 ### Carried forward
-- Step 3: replace `LeadPolicy` stubs, add the lead visibility scope; My Profile name/phone/job title.
+- Step 3: replace `LeadPolicy` stubs, add the lead visibility scope; My Profile name/phone/job title (done 2026-10-20).
 - Step 7: run `php artisan icons:cache` at container start (blade-icons) for faster rendering.
 - Step 7: enforce 2FA for admins; production deploy checklist (TRUSTED_PROXIES, SMTP, queue, backups).
 
@@ -152,3 +152,11 @@ Steps 3–6 follow `docs/OVERNIGHT_PLAN.md`; progress in `docs/OVERNIGHT_LOG.md`
 - **Operations:** `RUNBOOK.md` (deploy, migrations, backups/restore, rollback, email check, admins,
   offboarding, secret rotation, leaked secrets, monitoring, monthly checks).
 - Pending: Render/Neon/R2/Resend/DNS setup by hand (DEPLOY.md), then live verification (step 7.7).
+
+## My Profile: edit your own details (2026-10-20)
+
+- `PUT /profile` (`ProfileController::update`, `ProfileRequest`, `UserPolicy::updateProfile`, self only):
+  name, direct phone and job title, same rules and messages as the Users form. Email, role and team stay
+  admin-only (extra fields are ignored). Changed field names audited as `profile.updated`.
+- Admins without two-step sign-in are still held on My Profile (`RequireTwoFactorForAdmins` blocks the save).
+- Tests: `ProfileTest` (8). Full suite: SQLite 243 passed + 1 skipped.
