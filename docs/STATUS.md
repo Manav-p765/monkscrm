@@ -165,7 +165,7 @@ names in the brief, the prototype screens (DESIGN_AUDIT §3, §5) and the routes
 | Follow-up reminders by email | Not built | No scheduler on Render free; only the in-app bell |
 | Tasks module (PRD §21) | Not built | Excluded from the MVP (the prototype has no screen for it) |
 | Import | Done | 6-step wizard, CSV/XLSX, staging encrypted, duplicates, undo within 24 h, history |
-| Export | Done | Lead CSV (filters, selected columns, formula-safe, audited) + report CSV. CSV only, no XLSX |
+| Export | Done | Lead CSV or Excel (.xlsx) (filters, selected columns, formula-safe, audited) + report CSV |
 | Reports | Done | Win rate, won value, funnel (cumulative), by status/source/assigned to/team, sales scorecard |
 | Users & teams | Partial | Invite, edit, deactivate with reassignment, reactivate, teams, manager directory. **Users can't edit their own name / phone / job title on My Profile** (carried forward since Step 2; only admins can) |
 | Settings | Done | Statuses, sources, tags, security & rules, currencies, permissions. No Integrations section yet |
@@ -250,7 +250,7 @@ Ranked by value for the effort. S ≈ days, M ≈ 1–2 weeks, L ≈ several wee
 | 8 | Customizable list columns | Different roles care about different columns | S–M | None |
 | 9 | Custom fields | Per-client data without migrations | L | jsonb column + settings UI + import / export / filter support |
 | 10 | Mobile layout pass | Sales use phones between meetings | M | Browser tests |
-| 11 | Small items: ~~My Profile name/phone/title~~, ~~live Kanban totals~~ (done 2026-10-20), XLSX export | Rough edges from the MVP | S | None |
+| 11 | Small items: ~~My Profile name/phone/title~~, ~~live Kanban totals~~, ~~XLSX export~~ (done 2026-10-20) | Rough edges from the MVP | S | None |
 
 ### Meta Ads track (from `Meta_Ads_CRM_Integration_Technical_Requirements.docx`)
 

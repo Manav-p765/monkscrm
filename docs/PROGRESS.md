@@ -168,3 +168,12 @@ Steps 3–6 follow `docs/OVERNIGHT_PLAN.md`; progress in `docs/OVERNIGHT_LOG.md`
   `<x-money>`; no money formatting in JS). The page now gets all column totals from one grouped query.
 - Tests: `LeadsTest::test_pipeline_totals_fragment_follows_visibility_and_filters`. Full suite: SQLite 244 passed
   + 1 skipped; PostgreSQL 245/245. Browser drag check still to do by hand.
+
+## Lead export to Excel (2026-10-20)
+
+- The export modal has "Download Excel" next to "Download CSV" (`format=xlsx`, `LeadExportRequest`). Written with
+  OpenSpout (already used by the import), streamed, same visibility, filters, columns, 20,000-row cap and
+  rate limit as CSV. Every value is an explicit text cell (never a formula, even if it starts with `=`); Deal
+  value is a number cell. The audit entry records the format.
+- Tests: `ImportExportTest::test_excel_export_is_scoped_text_only_and_audited`. Full suite: SQLite 245 passed
+  + 1 skipped; PostgreSQL 246/246.

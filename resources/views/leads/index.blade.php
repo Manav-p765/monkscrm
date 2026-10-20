@@ -18,7 +18,7 @@
         ]" />
         @can('export', App\Models\Lead::class)
             @unless ($archived)
-                <x-button type="button" variant="secondary" icon="download" x-data="modalTrigger" data-modal="export-leads" x-on:click="open">Export CSV</x-button>
+                <x-button type="button" variant="secondary" icon="download" x-data="modalTrigger" data-modal="export-leads" x-on:click="open">Export</x-button>
             @endunless
         @endcan
         @can('create', App\Models\Lead::class)
@@ -38,7 +38,7 @@
     @include('leads._filters', ['route' => 'leads.index'])
 
     @can('export', App\Models\Lead::class)
-        <x-modal name="export-leads" title="Export Leads to CSV" :subtitle="number_format($leads->total()).' leads match your current filters (up to '.number_format(\App\Http\Controllers\LeadExportController::MAX_ROWS).' are exported)'" size="lg">
+        <x-modal name="export-leads" title="Export Leads" :subtitle="number_format($leads->total()).' leads match your current filters (up to '.number_format(\App\Http\Controllers\LeadExportController::MAX_ROWS).' are exported)'" size="lg">
             <form id="export-form" method="GET" action="{{ route('leads.export') }}" class="space-y-3">
                 @foreach (collect($filters)->filter(fn ($v) => $v !== null && $v !== '') as $key => $value)
                     <input type="hidden" name="{{ $key }}" value="{{ $value }}">
@@ -56,7 +56,8 @@
             </form>
             <x-slot:footer>
                 <x-button type="button" variant="ghost" x-on:click="close">Cancel</x-button>
-                <x-button form="export-form" icon="download" :loading="false" x-on:click="close">Download CSV</x-button>
+                <x-button form="export-form" name="format" value="xlsx" variant="secondary" icon="download" :loading="false" x-on:click="close">Download Excel</x-button>
+                <x-button form="export-form" name="format" value="csv" icon="download" :loading="false" x-on:click="close">Download CSV</x-button>
             </x-slot:footer>
         </x-modal>
     @endcan

@@ -358,4 +358,38 @@ class ImportExportTest extends TestCase
         }
         $this->get('/leads-export')->assertStatus(429);
     }
+
+    public function test_excel_export_is_scoped_text_only_and_audited(): void
+    {
+        Lead::factory()->create(['first_name' => '=cmd|calc', 'email' => 'a@x.com', 'currency' => 'INR', 'deal_value' => 10000050, 'city' => 'Pune']);
+        Lead::factory()->create(['first_name' => 'Other', 'email' => 'b@x.com', 'city' => 'Delhi']);
+
+        $this->actingAs($this->sales)->get('/leads-export?format=xlsx')->assertForbidden();
+
+        $response = $this->actingAs($this->manager)
+            ->get('/leads-export?format=xlsx&city=pune&columns[]=first_name&columns[]=email&columns[]=deal_value&columns[]=currency')
+            ->assertOk()->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $this->assertStringEndsWith('.xlsx', $response->headers->get('Content-Disposition'));
+
+        $path = tempnam(sys_get_temp_dir(), 'xlsx');
+        file_put_contents($path, $response->streamedContent());
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $sheet = $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+        unlink($path);
+
+        $this->assertStringNotContainsString('<f>', $sheet, 'No cell is a formula');
+        $this->assertStringContainsString('=cmd|calc', $sheet); // kept as plain text, no apostrophe
+        $this->assertStringContainsString('<v>100000.5</v>', $sheet); // deal value is a number
+        $this->assertStringContainsString('a@x.com', $sheet);
+        $this->assertStringNotContainsString('b@x.com', $sheet);
+        $this->assertStringNotContainsString('Status', $sheet);
+
+        $log = AuditLog::where('action', 'leads.exported')->sole();
+        $this->assertSame(['xlsx', 1], [$log->meta['format'], $log->meta['rows']]);
+        $this->assertArrayNotHasKey('format', $log->meta['filters']);
+
+        $this->get('/leads-export?format=pdf')->assertSessionHasErrors(['format' => 'Choose CSV or Excel for the export.']);
+    }
 }
