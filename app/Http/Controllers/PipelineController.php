@@ -11,18 +11,21 @@ use App\Models\Tag;
 use App\Models\User;
 use App\Support\LeadFilters;
 use App\Support\Money;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 /**
  * Kanban (prototype KanbanBoard): one column per active status, in order, with a count and
  * per-currency totals (never summed across currencies). Same filters as the list. Max 50 cards per
  * column, then "Show more" (?show[STATUS_ID]=100). Moves go through LeadController::updateStatus.
+ * A fetch request (X-Requested-With: fetch) gets only the column counts and totals as an HTML fragment,
+ * so the board refreshes them after a drag without re-rendering the cards.
  */
 class PipelineController extends Controller
 {
     public const PER_COLUMN = 50;
 
-    public function __invoke(LeadListRequest $request): View
+    public function __invoke(LeadListRequest $request): View|Response
     {
         $user = $request->user();
         $filters = $request->filters();
@@ -37,8 +40,20 @@ class PipelineController extends Controller
 
         $statuses = LeadStatus::query()->active()->ordered()->get();
         $counts = $base()->toBase()->selectRaw('lead_status_id, count(*) as total')->groupBy('lead_status_id')->pluck('total', 'lead_status_id');
+        $sums = $base()->toBase()->whereNotNull('deal_value')
+            ->selectRaw('lead_status_id, currency, sum(deal_value) as total')->groupBy('lead_status_id', 'currency')->get()
+            ->groupBy('lead_status_id')->map(fn ($rows) => $rows->pluck('total', 'currency')->all());
+        $totals = fn (LeadStatus $status) => Money::totals(null, $sums[$status->id] ?? []);
 
-        $columns = $statuses->map(function (LeadStatus $status) use ($base, $counts, $show) {
+        if ($request->header('X-Requested-With') === 'fetch') {
+            return response()->view('pipeline._totals', ['columns' => $statuses->map(fn (LeadStatus $status) => [
+                'status' => $status,
+                'count' => (int) ($counts[$status->id] ?? 0),
+                'totals' => $totals($status),
+            ])]);
+        }
+
+        $columns = $statuses->map(function (LeadStatus $status) use ($base, $counts, $totals, $show) {
             $limit = (int) ($show[$status->id] ?? self::PER_COLUMN);
             $cards = $base()->where('lead_status_id', $status->id)
                 ->with(['assignee:id,name', 'tags:id,name,color'])
@@ -48,7 +63,7 @@ class PipelineController extends Controller
             return [
                 'status' => $status,
                 'count' => (int) ($counts[$status->id] ?? 0),
-                'totals' => Money::totals($base()->where('lead_status_id', $status->id)),
+                'totals' => $totals($status),
                 'cards' => $cards,
                 'limit' => $limit,
             ];

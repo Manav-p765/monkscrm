@@ -58,7 +58,7 @@
                                     <span data-count class="rounded-full border border-slate-200 bg-white px-1.5 text-3xs font-bold text-slate-700">{{ $column['count'] }}</span>
                                 </div>
                             </div>
-                            <x-money :totals="$column['totals']" empty="" class="mt-1 block text-xs font-bold whitespace-normal text-slate-700" />
+                            <x-money :totals="$column['totals']" empty="" data-totals class="mt-1 block text-xs font-bold whitespace-normal text-slate-700" />
                         </header>
 
                         <div data-cards class="min-h-95 flex-1 space-y-2.5">

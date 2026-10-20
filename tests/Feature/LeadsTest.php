@@ -327,6 +327,27 @@ class LeadsTest extends TestCase
         $this->assertCount(56, $more['cards']);
     }
 
+    public function test_pipeline_totals_fragment_follows_visibility_and_filters(): void
+    {
+        $new = LeadStatus::where('name', 'New')->first();
+        $won = LeadStatus::where('name', 'Won')->first();
+        Lead::factory()->create(['assigned_to' => $this->sales->id, 'lead_status_id' => $new->id, 'deal_value' => 150000, 'currency' => 'USD', 'priority' => 'high']);
+        Lead::factory()->create(['assigned_to' => $this->sales->id, 'lead_status_id' => $new->id, 'deal_value' => 25000050, 'currency' => 'INR', 'priority' => 'low']);
+        Lead::factory()->create(['assigned_to' => $this->otherSales->id, 'lead_status_id' => $new->id, 'deal_value' => 999900, 'currency' => 'USD', 'first_name' => 'Hiddenperson']);
+
+        $fragment = $this->actingAs($this->sales)->withHeader('X-Requested-With', 'fetch')->get('/pipeline')->assertOk();
+        $columns = $fragment->viewData('columns');
+        $this->assertSame(['count' => 2, 'totals' => ['USD' => 150000, 'INR' => 25000050]],
+            collect($columns->firstWhere('status.id', $new->id))->only('count', 'totals')->all());
+        $this->assertSame(0, $columns->firstWhere('status.id', $won->id)['count']);
+        $fragment->assertSee('data-column="'.$new->id.'" data-count="2"', false)
+            ->assertSee('$1,500 · ₹2,50,000.50')
+            ->assertDontSee('Hiddenperson')->assertDontSee('<article', false);
+
+        $filtered = $this->get('/pipeline?priority=high')->viewData('columns')->firstWhere('status.id', $new->id);
+        $this->assertSame(['USD' => 150000], $filtered['totals']);
+    }
+
     // ---- Bulk ----------------------------------------------------------------------------------
 
     public function test_bulk_actions_recheck_every_id_against_visibility_and_policy(): void

@@ -160,3 +160,11 @@ Steps 3–6 follow `docs/OVERNIGHT_PLAN.md`; progress in `docs/OVERNIGHT_LOG.md`
   admin-only (extra fields are ignored). Changed field names audited as `profile.updated`.
 - Admins without two-step sign-in are still held on My Profile (`RequireTwoFactorForAdmins` blocks the save).
 - Tests: `ProfileTest` (8). Full suite: SQLite 243 passed + 1 skipped.
+
+## Pipeline: live column totals (2026-10-20)
+
+- After a successful drag, the board fetches `/pipeline` (same filters) with `X-Requested-With: fetch` and gets
+  only the column counts and per-currency totals as an HTML fragment (`pipeline/_totals.blade.php`, formatted by
+  `<x-money>`; no money formatting in JS). The page now gets all column totals from one grouped query.
+- Tests: `LeadsTest::test_pipeline_totals_fragment_follows_visibility_and_filters`. Full suite: SQLite 244 passed
+  + 1 skipped; PostgreSQL 245/245. Browser drag check still to do by hand.

@@ -102,6 +102,7 @@ Alpine.data('duplicateCheck', () => ({
 
 // Pipeline (Kanban): native HTML5 drag-and-drop. A drop moves the card at once, then asks the server
 // (PATCH /leads/{ref}/status, LeadStatusChanger); if the server refuses, the card goes back.
+// After a move, column counts and money totals are refreshed from the server (same URL and filters).
 // Each card also has a keyboard-accessible "Move to…" menu (plain forms).
 Alpine.data('kanban', () => ({
     dragged: null,
@@ -173,6 +174,7 @@ Alpine.data('kanban', () => ({
             }
             card.dataset.status = column.dataset.status;
             this.toast(true, 'Moved ' + card.dataset.name + ' to ' + column.dataset.name);
+            this.refreshTotals();
         } catch {
             from.insertBefore(card, next);
             this.adjust(fromColumn, 1);
@@ -183,6 +185,23 @@ Alpine.data('kanban', () => ({
     adjust(column, delta) {
         const badge = column.querySelector('[data-count]');
         badge.textContent = String(Math.max(0, parseInt(badge.textContent, 10) + delta));
+    },
+    async refreshTotals() {
+        let html;
+        try {
+            html = await fetchFragment(window.location.href);
+        } catch {
+            return; // Totals are a convenience; they are right again on the next page load.
+        }
+        const fragment = document.createElement('template');
+        fragment.innerHTML = html;
+        fragment.content.querySelectorAll('[data-column]').forEach((totals) => {
+            const column = this.$root.querySelector('section[data-status="' + totals.dataset.column + '"]');
+            if (column) {
+                column.querySelector('[data-count]').textContent = totals.dataset.count;
+                column.querySelector('[data-totals]').textContent = totals.textContent.trim();
+            }
+        });
     },
     toast(ok, message) {
         this.ok = ok;

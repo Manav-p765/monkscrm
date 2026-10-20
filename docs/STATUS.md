@@ -157,7 +157,7 @@ names in the brief, the prototype screens (DESIGN_AUDIT §3, §5) and the routes
 | Filters | Done | Status, assigned to, source, priority, tag, currency |
 | Saved filter views | Not built | Filters live in the URL only (bookmarkable) |
 | Sorting | Done | |
-| Pipeline (Kanban) | Done | Drag & drop + "Move to…"; column money totals refresh only on reload |
+| Pipeline (Kanban) | Done | Drag & drop + "Move to…"; column counts and money totals refresh after each drag |
 | Lead detail | Done | Slide-over with its own URL; inline status / priority / assigned to; timeline |
 | Activities | Done | Call, email, meeting, SMS, other + outcome; "no answer" outcomes don't count as contacted |
 | Notes | Done | Author edits within 15 min; admin delete (audited) |
@@ -206,7 +206,7 @@ names in the brief, the prototype screens (DESIGN_AUDIT §3, §5) and the routes
 - DEPLOY.md and RUNBOOK.md say DNS is at Vercel; it's at Hostinger. Update the docs.
 - No version endpoint: production's commit can only be guessed. A build-time `APP_VERSION` (git SHA) shown to
   admins, or in a header, would fix that.
-- Kanban column money totals don't update after a drag until reload.
+- ~~Kanban column money totals don't update after a drag until reload.~~ Fixed 2026-10-20.
 - My Profile can't edit own name, phone or job title.
 - `X-Robots-Tag` missing on static files (e.g. `robots.txt`); cosmetic, since `robots.txt` disallows all.
 
@@ -250,7 +250,7 @@ Ranked by value for the effort. S ≈ days, M ≈ 1–2 weeks, L ≈ several wee
 | 8 | Customizable list columns | Different roles care about different columns | S–M | None |
 | 9 | Custom fields | Per-client data without migrations | L | jsonb column + settings UI + import / export / filter support |
 | 10 | Mobile layout pass | Sales use phones between meetings | M | Browser tests |
-| 11 | Small items: My Profile name/phone/title, live Kanban totals, XLSX export | Rough edges from the MVP | S | None |
+| 11 | Small items: ~~My Profile name/phone/title~~, ~~live Kanban totals~~ (done 2026-10-20), XLSX export | Rough edges from the MVP | S | None |
 
 ### Meta Ads track (from `Meta_Ads_CRM_Integration_Technical_Requirements.docx`)
 
