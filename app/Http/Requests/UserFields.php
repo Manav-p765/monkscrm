@@ -36,7 +36,7 @@ class UserFields
             'name.required' => 'Enter the person’s full name.',
             'name.max' => 'Keep the name under 100 characters.',
             'email.required' => 'Enter the email address they’ll sign in with.',
-            'email.email' => 'Enter a valid email address, e.g. priya.patel@hybridmonks.com.',
+            'email.email' => 'Enter a valid email address, e.g. priya.patel@example.com.',
             'role.required' => 'Choose a role.',
             'role.enum' => 'Choose a role from the list.',
             'team_id.exists' => 'Choose a team from the list.',

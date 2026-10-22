@@ -4,7 +4,7 @@
         @csrf
 
         <x-input name="email" type="email" label="Email Address" size="lg" icon="mail" required autofocus autocomplete="username"
-                 placeholder="e.g. priya.patel@hybridmonks.com" />
+                 placeholder="e.g. priya.patel@example.com" />
 
         <div class="space-y-3 pt-2">
             <x-button size="lg" loading="Sending…">

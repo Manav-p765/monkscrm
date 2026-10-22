@@ -196,7 +196,7 @@
             <form id="invite-form" method="POST" action="{{ route('users.store') }}" class="space-y-3.5" novalidate>
                 @csrf
                 <x-input name="name" label="Full Name" bag="invite" id="invite-name" placeholder="e.g. Jordan Hayes" required />
-                <x-input name="email" type="email" label="Login Email Address" bag="invite" id="invite-email" placeholder="jordan.hayes@hybridmonks.com" required />
+                <x-input name="email" type="email" label="Login Email Address" bag="invite" id="invite-email" placeholder="jordan.hayes@example.com" required />
                 <div class="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-2xs text-slate-600">
                     <x-lucide-mail class="mt-0.5 size-3.5 shrink-0 text-indigo-600" aria-hidden="true" />
                     <span>No password needed. We'll email a link they use to choose their own password. It works once and expires in 48 hours. You'll also see the link once, so you can share it privately if email isn't working yet.</span>

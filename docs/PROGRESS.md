@@ -177,3 +177,11 @@ Steps 3–6 follow `docs/OVERNIGHT_PLAN.md`; progress in `docs/OVERNIGHT_LOG.md`
   value is a number cell. The audit entry records the format.
 - Tests: `ImportExportTest::test_excel_export_is_scoped_text_only_and_audited`. Full suite: SQLite 245 passed
   + 1 skipped; PostgreSQL 246/246.
+
+## Demo site mode (2026-10-21)
+
+- A separate demo deployment (own Render service + own Neon database, never production) sets `DEMO_MODE=true`,
+  `APP_NAME="Demo CRM"` (optional `DEMO_PASSWORD`). It shows a neutral logo/icons (`public/images/demo/`) via
+  `config('crm.brand_images')`, and `DemoSeeder` may run there (still refuses a non-empty database).
+- Placeholder emails in sign-in/invite forms are now `@example.com` everywhere.
+- Tests: `DemoModeTest`.

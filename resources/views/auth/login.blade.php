@@ -3,7 +3,7 @@
         @csrf
 
         <x-input name="email" type="email" label="Email Address" size="lg" icon="mail" required autofocus
-                 autocomplete="username" placeholder="e.g. priya.patel@hybridmonks.com" />
+                 autocomplete="username" placeholder="e.g. priya.patel@example.com" />
 
         <x-input name="password" type="password" label="Password" size="lg" icon="lock" reveal required
                  autocomplete="current-password" placeholder="Enter your password">

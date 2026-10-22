@@ -73,9 +73,9 @@ class DemoSeeder extends Seeder
 
     public function run(): void
     {
-        // Fake users and leads: never anywhere but a developer machine (not production, staging or CI).
-        if (! app()->environment('local')) {
-            throw new RuntimeException('DemoSeeder only runs when APP_ENV=local.');
+        // Fake users and leads: only on a developer machine or a dedicated demo site (DEMO_MODE=true), never production/CI.
+        if (! app()->environment('local') && ! config('crm.demo')) {
+            throw new RuntimeException('DemoSeeder only runs when APP_ENV=local or DEMO_MODE=true.');
         }
 
         $this->call(DatabaseSeeder::class);
@@ -93,7 +93,7 @@ class DemoSeeder extends Seeder
         $real = now()->toImmutable();
         $this->endOfToday = CarbonImmutable::instance(Dates::endOfToday());
         try {
-            $password = Str::password(16);
+            $password = (config('crm.demo') ? config('crm.demo_password') : null) ?: Str::password(16); // demo sites may publish one shared password
             $users = $this->users($password, $real);
             foreach ($this->plan() as $i => [$status, $india]) {
                 $this->lead($i, $status, $india, $users, $real);

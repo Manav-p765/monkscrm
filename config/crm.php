@@ -3,6 +3,14 @@
 return [
 
     /*
+    | Demo site (a separate deployment with its own database, never production): DEMO_MODE=true shows a
+    | neutral brand (images/demo/*), lets DemoSeeder run outside local, and may use DEMO_PASSWORD.
+    */
+    'demo' => (bool) env('DEMO_MODE', false),
+    'demo_password' => env('DEMO_PASSWORD'),
+    'brand_images' => env('DEMO_MODE', false) ? 'images/demo' : 'images',
+
+    /*
     | Everything is stored in UTC (config('app.timezone')). Dates are shown in, and dates users
     | type are read as, this timezone. No settings UI: our team works in India.
     */

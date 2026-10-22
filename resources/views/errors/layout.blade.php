@@ -7,9 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>@yield('code') · {{ config('app.name') }}</title>
-    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
-    <link rel="icon" href="{{ asset('images/favicon-32.png') }}" type="image/png">
-    <link rel="apple-touch-icon" href="{{ asset('images/apple-touch-icon.png') }}">
+    @unless (config('crm.demo')) <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any"> @endunless
+    <link rel="icon" href="{{ asset(config('crm.brand_images').'/favicon-32.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ asset(config('crm.brand_images').'/apple-touch-icon.png') }}">
     <style nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
         body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
                font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
@@ -28,7 +28,7 @@
 </head>
 <body>
     <main>
-        <img class="tile" src="{{ asset('images/logo.png') }}" alt="" aria-hidden="true" width="192" height="192">
+        <img class="tile" src="{{ asset(config('crm.brand_images').'/logo.png') }}" alt="" aria-hidden="true" width="192" height="192">
         <p class="code">Error @yield('code')</p>
         <h1>@yield('title')</h1>
         <p>@yield('message')</p>
