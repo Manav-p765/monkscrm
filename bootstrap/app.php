@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\BlockInDemo;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\RequireTwoFactorForAdmins;
 use App\Http\Middleware\SecurityHeaders;
@@ -28,7 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Runs on every web request; logs out users deactivated mid-session, then holds admins
         // without two-step sign-in on My Profile until they set it up.
-        $middleware->web(append: [EnsureUserIsActive::class, RequireTwoFactorForAdmins::class]);
+        $middleware->web(append: [EnsureUserIsActive::class, RequireTwoFactorForAdmins::class, BlockInDemo::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontFlash([

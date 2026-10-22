@@ -184,4 +184,8 @@ Steps 3–6 follow `docs/OVERNIGHT_PLAN.md`; progress in `docs/OVERNIGHT_LOG.md`
   `APP_NAME="Demo CRM"` (optional `DEMO_PASSWORD`). It shows a neutral logo/icons (`public/images/demo/`) via
   `config('crm.brand_images')`, and `DemoSeeder` may run there (still refuses a non-empty database).
 - Placeholder emails in sign-in/invite forms are now `@example.com` everywhere.
+- Visitors share the demo logins, so `BlockInDemo` turns off everything that could lock others out, take over
+  an account or send email: own password and two-step sign-in, forgot/reset password, invites, and every
+  change to users. Admins are not forced to set up two-step sign-in on the demo site.
+- Demo dates are relative to when it was seeded: re-seed before a demo so follow-ups look current.
 - Tests: `DemoModeTest`.
