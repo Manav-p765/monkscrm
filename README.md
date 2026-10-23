@@ -1,4 +1,4 @@
-# HybridMonks
+# HybridMonks CRM
 
 Internal lead-management CRM for Hybrid Monks LLP (crm.hybridmonks.com). The product name is set by `APP_NAME`.
 Project rules for contributors and AI agents: [CLAUDE.md](CLAUDE.md). Build status: [docs/PROGRESS.md](docs/PROGRESS.md).

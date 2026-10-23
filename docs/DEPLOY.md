@@ -24,7 +24,7 @@ Values shown are the exact value to use; "(secret)" means generate or copy it, n
 
 | Name | Value | Purpose |
 |---|---|---|
-| `APP_NAME` | `HybridMonks` | Product name in the UI, page titles and emails. |
+| `APP_NAME` | `HybridMonks CRM` | Product name in the UI, page titles and emails. |
 | `APP_ENV` | `production` | Turns on production behaviour (HTTPS, HSTS, secure cookies, boot checks). Also set in the image. |
 | `APP_DEBUG` | `false` | Never `true` in production: it would show stack traces and settings. The app refuses to boot if true. |
 | `APP_KEY` 🔒 | (secret) | Encryption key. See "APP_KEY" below. The app refuses to boot without it. |
@@ -40,7 +40,7 @@ Values shown are the exact value to use; "(secret)" means generate or copy it, n
 | `MAIL_MAILER` | `resend` | Send email through Resend. |
 | `RESEND_API_KEY` 🔒 | (secret) | Resend API key with **Sending access** for `hybridmonks.com` only. |
 | `MAIL_FROM_ADDRESS` | `noreply@hybridmonks.com` | Sender of invites and password resets. The domain must be verified in Resend. |
-| `MAIL_FROM_NAME` | `HybridMonks` | Sender name. |
+| `MAIL_FROM_NAME` | `HybridMonks CRM` | Sender name. |
 
 Set by the image and normally left alone: `CACHE_STORE=database`, `QUEUE_CONNECTION=database`, `PORT=8080`.
 

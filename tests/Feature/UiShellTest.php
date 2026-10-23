@@ -25,10 +25,10 @@ class UiShellTest extends TestCase
             ->assertSee('<title>Lead Directory · Renamed CRM</title>', false);
     }
 
-    public function test_default_product_name_is_hybridmonks(): void
+    public function test_default_product_name_is_hybridmonks_crm(): void
     {
-        $this->assertStringContainsString('APP_NAME="HybridMonks"', file_get_contents(base_path('.env.example')));
-        $this->assertStringContainsString("env('APP_NAME', 'HybridMonks')", file_get_contents(config_path('app.php')));
+        $this->assertStringContainsString('APP_NAME="HybridMonks CRM"', file_get_contents(base_path('.env.example')));
+        $this->assertStringContainsString("env('APP_NAME', 'HybridMonks CRM')", file_get_contents(config_path('app.php')));
     }
 
     public function test_brand_logo_and_icons_are_on_sign_in_app_and_error_pages(): void

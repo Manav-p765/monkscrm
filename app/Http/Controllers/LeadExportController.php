@@ -11,6 +11,7 @@ use App\Support\LeadFilters;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use OpenSpout\Common\Entity\Cell\EmptyCell;
 use OpenSpout\Common\Entity\Cell\NumericCell;
 use OpenSpout\Common\Entity\Cell\StringCell;
@@ -60,7 +61,7 @@ class LeadExportController extends Controller
         }
         Audit::log('leads.exported', null, ['filters' => $logged, 'columns' => $columns, 'format' => $format, 'rows' => $count]);
 
-        $name = 'monks-crm-leads-'.now(Dates::zone())->format('Y-m-d').'.'.$format;
+        $name = Str::slug(config('app.name')).'-leads-'.now(Dates::zone())->format('Y-m-d').'.'.$format;
 
         return $format === 'xlsx'
             ? response()->streamDownload(fn () => $this->writeXlsx($query, $columns), $name,

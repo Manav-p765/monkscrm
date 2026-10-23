@@ -1,4 +1,4 @@
-# HybridMonks runbook
+# HybridMonks CRM runbook
 
 Short, practical steps for running production. Settings and first deploy: [docs/DEPLOY.md](docs/DEPLOY.md).
 Production: Render web service (Docker, free tier: no shell) + Neon project `monkcrm` (Singapore, branch

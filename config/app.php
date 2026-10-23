@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'HybridMonks'),
+    'name' => env('APP_NAME', 'HybridMonks CRM'),
 
     /*
     |--------------------------------------------------------------------------

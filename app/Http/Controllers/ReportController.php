@@ -8,6 +8,7 @@ use App\Support\Dates;
 use App\Support\LeadStats;
 use App\Support\Money;
 use App\Http\Requests\ReportFilterRequest;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -42,7 +43,7 @@ class ReportController extends Controller
         [$filters, $stats] = $this->stats($request);
         Audit::log('report.exported', null, ['from' => $filters['from'], 'to' => $filters['to']]);
 
-        $name = 'monks-crm-report-'.$filters['from'].'-to-'.$filters['to'].'.csv';
+        $name = Str::slug(config('app.name')).'-report-'.$filters['from'].'-to-'.$filters['to'].'.csv';
 
         return response()->streamDownload(function () use ($stats, $filters) {
             $out = fopen('php://output', 'w');
