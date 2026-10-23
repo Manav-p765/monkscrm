@@ -1,6 +1,7 @@
 @php
     $url = $integration->intakeUrl();
     $bag = 'integration'.$integration->id;
+    $agentPrompt = \App\Support\IntegrationPrompt::for($integration);
     $snippets = [
         'server' => <<<JS
             // Next.js route handler / server action, Express or any Node server (never in browser code).
@@ -106,12 +107,27 @@
             </p>
         </div>
 
-        <x-tabs variant="pills" active="server" label="Ways to connect" :tabs="[
+        <x-tabs variant="pills" active="agent" label="Ways to connect" :tabs="[
+            'agent' => ['label' => 'AI agent prompt'],
             'server' => ['label' => 'Next.js / Node (signed)'],
             'bearer' => ['label' => 'WordPress · Zapier · Make'],
             'html' => ['label' => 'Plain HTML form'],
         ]">
-            <x-tab-panel name="server" active>
+            <x-tab-panel name="agent" active>
+                <div class="mb-2 flex flex-wrap items-start justify-between gap-2">
+                    <p class="max-w-2xl text-xs text-slate-600">
+                        Copy this and paste it into the coding agent working on the website's code (Claude Code, Cursor, Copilot…). It finds the forms,
+                        picks the right method for the site (server, WordPress or plain HTML), adds ad tracking and the spam trap, and tells you what to set on your hosting.
+                        <strong class="font-semibold text-amber-700">It contains the secret key:</strong> paste it only into an agent working on your own site, never into a public chat.
+                    </p>
+                    <x-button type="button" size="sm" icon="copy" :loading="false" class="shrink-0"
+                              x-data="copyText" data-text="{{ $agentPrompt }}" x-on:click="copy">
+                        <span x-show="notCopied">Copy prompt</span><span x-show="copied" x-cloak>Copied</span>
+                    </x-button>
+                </div>
+                <pre class="max-h-96 overflow-auto rounded-xl bg-slate-900 p-4 text-2xs leading-relaxed whitespace-pre-wrap text-slate-100"><code>{{ $agentPrompt }}</code></pre>
+            </x-tab-panel>
+            <x-tab-panel name="server">
                 <p class="mb-2 text-xs text-slate-600">The safest option: your server signs each post with the secret key (HMAC SHA-256 of “timestamp.body”). Posts older than 5 minutes are refused.</p>
                 <pre class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-2xs leading-relaxed text-slate-100"><code>{{ $snippets['server'] }}</code></pre>
             </x-tab-panel>

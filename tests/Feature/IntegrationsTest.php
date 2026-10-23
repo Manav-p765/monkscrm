@@ -232,6 +232,25 @@ class IntegrationsTest extends TestCase
         $this->assertStringNotContainsString('whsec_', json_encode($log->meta));
     }
 
+    public function test_agent_prompt_has_the_setup_details_and_only_admins_see_it(): void
+    {
+        $integration = $this->integration();
+
+        $this->actingAs($this->admin)->get("/settings/integrations/{$integration->id}")->assertOk()
+            ->assertSee('AI agent prompt')->assertSee('Copy prompt')
+            ->assertSee('POST '.$integration->intakeUrl(), false)
+            ->assertSee('Browser posts are currently OFF', false);
+
+        $prompt = \App\Support\IntegrationPrompt::for($integration);
+        $this->assertStringContainsString($integration->secret, $prompt);
+        $this->assertStringContainsString('CRM_FORM_SECRET', $prompt);
+
+        $integration->update(['allow_browser' => true, 'allowed_origins' => ['https://example.com']]);
+        $this->assertStringContainsString('Browser posts are ON for: https://example.com', \App\Support\IntegrationPrompt::for($integration->fresh()));
+
+        $this->actingAs(User::factory()->manager()->create())->get("/settings/integrations/{$integration->id}")->assertForbidden();
+    }
+
     public function test_browser_posts_need_an_allowed_website_and_valid_addresses(): void
     {
         $this->actingAs($this->admin)->post('/settings/integrations', ['name' => 'X', 'allow_browser' => '1', 'allowed_origins' => ''])
