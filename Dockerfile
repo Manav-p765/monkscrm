@@ -62,6 +62,7 @@ ENV APP_ENV=production \
     DB_CONNECTION=pgsql \
     DB_SSLMODE=require \
     SESSION_DRIVER=database \
+    BCRYPT_ROUNDS=10 \
     CACHE_STORE=database \
     QUEUE_CONNECTION=database \
     PORT=8080 \

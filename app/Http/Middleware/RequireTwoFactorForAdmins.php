@@ -36,7 +36,7 @@ class RequireTwoFactorForAdmins
         $user = $request->user();
 
         // The demo site's shared admin login cannot use two-step sign-in (BlockInDemo).
-        if (! $user || ! $user->isAdmin() || $user->hasTwoFactorEnabled() || config('crm.demo')) {
+        if (! config('crm.two_factor') || ! $user || ! $user->isAdmin() || $user->hasTwoFactorEnabled() || config('crm.demo')) {
             return $next($request);
         }
 

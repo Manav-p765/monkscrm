@@ -17,6 +17,12 @@ return [
     'display_timezone' => 'Asia/Kolkata',
 
     /*
+    | Two-step sign-in (Fortify 2FA). Off: no code at sign-in, no setup on My Profile, admins are not
+    | forced to set it up. Stored secrets are kept, so turning it back on restores everyone's setup.
+    */
+    'two_factor' => (bool) env('TWO_FACTOR_ENABLED', false),
+
+    /*
     | Who may do what: the single source for the gates (AppServiceProvider defines one gate per
     | `gate` entry), the policies (which read the role lists below) and the read-only permissions
     | table on the Settings page. Roles are App\Enums\Role values. `setting` marks a sales permission

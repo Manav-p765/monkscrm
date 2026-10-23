@@ -41,6 +41,8 @@ Values shown are the exact value to use; "(secret)" means generate or copy it, n
 | `RESEND_API_KEY` 🔒 | (secret) | Resend API key with **Sending access** for `hybridmonks.com` only. |
 | `MAIL_FROM_ADDRESS` | `noreply@hybridmonks.com` | Sender of invites and password resets. The domain must be verified in Resend. |
 | `MAIL_FROM_NAME` | `HybridMonks CRM` | Sender name. |
+| `TWO_FACTOR_ENABLED` | (unset = off) | `true` turns two-step sign-in back on (and requires it for admins). |
+| `SESSION_LIFETIME` | (unset = 10080) | Minutes of inactivity before sign-out (default 7 days). |
 
 Set by the image and normally left alone: `CACHE_STORE=database`, `QUEUE_CONNECTION=database`, `PORT=8080`.
 
@@ -99,6 +101,6 @@ DNS records (nameservers `ns1/ns2.dns-parking.com`). In the *Name* field, enter 
 3. Run migrations and the base seeder from your machine: `scripts/migrate-production.ps1` (RUNBOOK.md).
    The app starts without tables but pages fail until this is done.
 4. The same script offers `crm:create-admin` on the first run: create your admin.
-5. Sign in, set up two-step sign-in (required for admins), invite a second admin.
+5. Sign in and invite a second admin (and, if `TWO_FACTOR_ENABLED=true`, set up two-step sign-in, required for admins).
 6. Check email: `scripts\production-artisan.ps1 crm:mail-test you@hybridmonks.com` (RUNBOOK.md, "Check email").
 7. Set up backups (GitHub secrets, `.github/workflows/backup.yml`) and monitoring (RUNBOOK.md).

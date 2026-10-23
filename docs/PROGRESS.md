@@ -207,3 +207,16 @@ Steps 3–6 follow `docs/OVERNIGHT_PLAN.md`; progress in `docs/OVERNIGHT_LOG.md`
 - **Known limit:** on Render's free tier the app sleeps; the first post after idle waits ~50 s to wake, and a
   sender with a short timeout may give up. Senders should retry on failure; an always-on instance removes it.
 - **Next:** phase 2 Meta Lead Ads (several Pages / ad accounts per client, tenant-aware), phase 3 Google Ads lead forms.
+
+## Sign-in: two-step off, longer sessions, speed (2026-10-23)
+
+- **Two-step sign-in is off** by default (`TWO_FACTOR_ENABLED`, config `crm.two_factor`): no code at sign-in,
+  no setup on My Profile, admins are no longer forced to set it up. Stored secrets are kept, so
+  `TWO_FACTOR_ENABLED=true` restores everyone's setup. The test suite runs with it on (phpunit.xml);
+  `TwoFactorSwitchTest` covers the default.
+- **Sessions last 7 days idle** (`SESSION_LIFETIME` default 10080, was 120 minutes).
+- **bcrypt cost 10** (was 12; image env + `.env.example`): about 4x faster password checks on Render's
+  0.1 CPU. Existing hashes are rehashed at each user's next sign-in.
+- **Slowness found:** Render serves from US West (`gcp-us-west1-1.origin.onrender.com`) while Neon is in
+  Singapore: `/login` takes ~4.5 s on the server, against 0.13 s for the same image at 0.1 CPU next to its
+  database. Fix: a new Render service in Singapore (region can't be changed in place), RUNBOOK.md.

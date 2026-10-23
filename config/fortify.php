@@ -142,14 +142,15 @@ return [
     |
     */
 
-    'features' => [
+    // Two-step sign-in only when TWO_FACTOR_ENABLED=true (config/crm.php "two_factor").
+    'features' => array_values(array_filter([
         Features::resetPasswords(),
         Features::updatePasswords(),
-        Features::twoFactorAuthentication([
+        env('TWO_FACTOR_ENABLED', false) ? Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,
             // 'window' => 0,
-        ]),
-    ],
+        ]) : null,
+    ])),
 
 ];

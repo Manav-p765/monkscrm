@@ -85,7 +85,7 @@ class UserPolicy
 
     public function disableTwoFactor(User $actor, User $target): Response
     {
-        if (! Permissions::allows($actor, 'manage-users') || ! $target->hasTwoFactorEnabled()) {
+        if (! config('crm.two_factor') || ! Permissions::allows($actor, 'manage-users') || ! $target->hasTwoFactorEnabled()) {
             return Response::deny();
         }
         if ($target->is($actor)) {

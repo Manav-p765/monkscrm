@@ -174,8 +174,9 @@ verified in Resend, wrong `MAIL_FROM_ADDRESS`, revoked key.
 
 ## Admins
 
-**Keep at least two active admins at all times**, each with two-step sign-in, so one can always recover the other.
-Admins without two-step sign-in can only reach My Profile until they set it up.
+**Keep at least two active admins at all times**, so one can always recover the other.
+Two-step sign-in is **off** (`TWO_FACTOR_ENABLED` unset). With it set to `true`, admins without two-step
+sign-in can only reach My Profile until they set it up, and the two-step steps below apply.
 
 **Add an admin:** Users → **Invite user**, role **Admin**. They set their own password from the emailed link
 (48 hours, single use), then must set up two-step sign-in. Confirm it shows "On" for them.

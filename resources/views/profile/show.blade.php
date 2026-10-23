@@ -1,4 +1,4 @@
-<x-layouts.app title="My Profile" subtitle="Your account details, password and two-step sign-in" width="5xl">
+<x-layouts.app title="My Profile" :subtitle="config('crm.two_factor') ? 'Your account details, password and two-step sign-in' : 'Your account details and password'" width="5xl">
     @php($status = session('status'))
 
     {{-- Account card (prototype MyProfileModal header + details) --}}
@@ -62,7 +62,8 @@
         </form>
     </section>
 
-    {{-- Two-step sign-in --}}
+    {{-- Two-step sign-in (only when switched on: config crm.two_factor) --}}
+    @if (config('crm.two_factor'))
     <section aria-labelledby="two-step-heading" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs">
         <div>
             <h2 id="two-step-heading" class="flex items-center gap-2 text-xs font-bold tracking-wider text-slate-900 uppercase">
@@ -140,4 +141,5 @@
             </form>
         @endif
     </section>
+    @endif
 </x-layouts.app>
