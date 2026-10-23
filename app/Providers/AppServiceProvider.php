@@ -46,6 +46,12 @@ class AppServiceProvider extends ServiceProvider
 
         // As-you-type endpoints (header search, duplicate check): 60 requests a minute per user.
         RateLimiter::for('live', fn (Request $request) => Limit::perMinute(60)->by('live:'.($request->user()?->id ?? $request->ip())));
+
+        // Public lead intake: per visitor/server and per form, so one noisy sender can't flood a form.
+        RateLimiter::for('intake', fn (Request $request) => [
+            Limit::perMinute(20)->by('intake:'.$request->route('key').':'.$request->ip()),
+            Limit::perMinute(300)->by('intake:'.$request->route('key')),
+        ]);
     }
 
     /**

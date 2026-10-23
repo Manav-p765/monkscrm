@@ -96,6 +96,11 @@ return [
         'tag.created' => 'Added a tag',
         'tag.updated' => 'Changed a tag',
         'tag.deleted' => 'Deleted a tag',
+        'integration.created' => 'Added an integration',
+        'integration.updated' => 'Changed an integration',
+        'integration.key_rotated' => 'Created a new integration secret key',
+        'lead.captured' => 'Lead received from a website form',
+        'lead.recaptured' => 'Existing lead sent a website form again',
     ],
 
     /*

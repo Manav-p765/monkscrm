@@ -31,7 +31,7 @@ class CodeRulesTest extends TestCase
     public function test_status_and_assignee_are_only_written_by_their_services(): void
     {
         // Allowed: the two services, and the initial status of a brand-new lead (form, import).
-        $allowed = ['LeadStatusChanger.php', 'LeadAssigner.php', 'LeadController.php:lead_status_id', 'LeadImporter.php:lead_status_id'];
+        $allowed = ['LeadStatusChanger.php', 'LeadAssigner.php', 'LeadController.php:lead_status_id', 'LeadImporter.php:lead_status_id', 'LeadIntake.php:lead_status_id'];
 
         foreach (File::allFiles(app_path()) as $file) {
             $source = $file->getContents();

@@ -14,6 +14,7 @@ use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\PipelineController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\LeadSourceController;
 use App\Http\Controllers\Settings\LeadStatusController;
 use App\Http\Controllers\Settings\SettingsController;
@@ -139,6 +140,12 @@ Route::middleware('auth')->group(function () {
         Route::put('/sources/{source}', [LeadSourceController::class, 'update'])->name('sources.update');
         Route::post('/sources/{source}/move', [LeadSourceController::class, 'reorder'])->name('sources.move');
         Route::post('/sources/{source}/default', [LeadSourceController::class, 'makeDefault'])->name('sources.default');
+
+        Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations');
+        Route::post('/integrations', [IntegrationController::class, 'store'])->name('integrations.store');
+        Route::get('/integrations/{integration}', [IntegrationController::class, 'show'])->name('integrations.show');
+        Route::put('/integrations/{integration}', [IntegrationController::class, 'update'])->name('integrations.update');
+        Route::post('/integrations/{integration}/rotate', [IntegrationController::class, 'rotate'])->name('integrations.rotate');
 
         Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
         Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update');

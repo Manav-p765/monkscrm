@@ -210,7 +210,9 @@ class SecurityReviewTest extends TestCase
         foreach (app('router')->getRoutes() as $route) {
             /** @var Route $route */
             $methods = array_diff($route->methods(), ['GET', 'HEAD', 'OPTIONS']);
-            if ($methods === [] || $route->uri() === '/') {
+            // Public intake has no session, so no CSRF: each post is authenticated by the integration's
+            // secret or allowed origin instead (IntegrationsTest).
+            if ($methods === [] || $route->uri() === '/' || $route->getName() === 'intake.store') {
                 continue;
             }
             $uri = preg_replace(['/\{lead\}/', '/\{[^}]+\}/'], [$lead->reference, '1'], $route->uri());
@@ -233,7 +235,7 @@ class SecurityReviewTest extends TestCase
             'imports/template.csv', 'imports/{import}', 'imports/{import}/errors.csv', 'invite/{token}', 'leads', 'leads-export',
             'leads/create', 'leads/duplicate-check', 'leads/live-search', 'leads/{lead}', 'leads/{lead}/edit', 'login', 'pipeline',
             'profile', 'reports', 'reports/export', 'reset-password/{token}', 'settings', 'settings/general', 'settings/permissions',
-            'settings/sources', 'settings/statuses', 'settings/tags', 'two-factor-challenge', 'user/confirm-password',
+            'settings/integrations', 'settings/integrations/{integration}', 'settings/sources', 'settings/statuses', 'settings/tags', 'two-factor-challenge', 'user/confirm-password',
             'user/confirmed-password-status', 'user/two-factor-qr-code', 'user/two-factor-recovery-codes', 'user/two-factor-secret-key',
             'users', 'users/{user}/deactivate', 'users/{user}/edit', 'up', 'storage/{path}', '{fallbackPlaceholder}'];
 

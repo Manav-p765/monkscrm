@@ -176,7 +176,8 @@ class LeadImporter
                 str_contains($h, 'state') || str_contains($h, 'province') => 'state',
                 str_contains($h, 'zip') || str_contains($h, 'postal') || str_contains($h, 'pincode') => 'postal_code',
                 str_contains($h, 'country') => 'country',
-                str_contains($h, 'note') || str_contains($h, 'desc') || str_contains($h, 'comment') => 'description',
+                str_contains($h, 'note') || str_contains($h, 'desc') || str_contains($h, 'comment')
+                    || str_contains($h, 'message') || str_contains($h, 'enquiry') || str_contains($h, 'inquiry') => 'description',
                 default => 'none',
             };
             if ($guess !== 'none' && isset($used[$guess])) {

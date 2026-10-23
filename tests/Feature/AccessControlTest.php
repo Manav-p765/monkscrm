@@ -28,6 +28,10 @@ class AccessControlTest extends TestCase
         'invite.show',
         'invite.store',
         'healthz',
+        // Public lead intake: authenticated per post by the integration's secret or allowed origin
+        // (IntegrationsTest covers that nothing gets in without them).
+        'intake.store',
+        'intake.preflight',
     ];
 
     public function test_every_non_public_route_requires_authentication(): void

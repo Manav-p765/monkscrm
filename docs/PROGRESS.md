@@ -189,3 +189,21 @@ Steps 3–6 follow `docs/OVERNIGHT_PLAN.md`; progress in `docs/OVERNIGHT_LOG.md`
   change to users. Admins are not forced to set up two-step sign-in on the demo site.
 - Demo dates are relative to when it was seeded: re-seed before a demo so follow-ups look current.
 - Tests: `DemoModeTest`.
+
+## Integrations, phase 1: website forms (2026-10-23)
+
+- **Settings → Integrations** (admin only): one integration per website form, each with its own form address
+  (`/intake/{key}`), secret key (encrypted, can be replaced), source and Assigned to for new leads, and
+  optional browser posts from listed websites with a thank-you page. Never deleted, only turned off.
+- **`POST /intake/{key}`** (public, no session or CSRF, rate-limited per sender and per form): signed
+  (`X-CRM-Timestamp` + `X-CRM-Signature`, HMAC SHA-256 of `timestamp.body`, 5-minute window) or
+  `Authorization: Bearer <secret>` from servers, WordPress plugins and Zapier/Make; or a browser post when the
+  Origin is allowed (CORS). JSON or form fields. Honeypot `_hp`.
+- `LeadIntake`: maps any field names (reuses the importer's guessing; strips "your-" prefixes), only contact
+  fields; other answers and UTM/click IDs go on the timeline. A known email/phone adds to that lead (no
+  duplicate, same response). Bad email with a phone keeps the lead. Audit `lead.captured` / `lead.recaptured`.
+- `integration_submissions` logs each post's result and field names (never values) for 90 days; `leads.integration_id`.
+- Setup guide: `docs/INTEGRATIONS.md`. Tests: `IntegrationsTest`.
+- **Known limit:** on Render's free tier the app sleeps; the first post after idle waits ~50 s to wake, and a
+  sender with a short timeout may give up. Senders should retry on failure; an always-on instance removes it.
+- **Next:** phase 2 Meta Lead Ads (several Pages / ad accounts per client, tenant-aware), phase 3 Google Ads lead forms.

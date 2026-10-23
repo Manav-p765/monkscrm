@@ -10,6 +10,7 @@
             'statuses' => ['label' => 'Lead Statuses (Pipeline)', 'href' => route('settings.statuses'), 'active' => request()->routeIs('settings.index', 'settings.statuses')],
             'sources' => ['label' => 'Lead Sources', 'href' => route('settings.sources'), 'active' => request()->routeIs('settings.sources')],
             'tags' => ['label' => 'Tags & Labels', 'href' => route('settings.tags'), 'active' => request()->routeIs('settings.tags')],
+            'integrations' => ['label' => 'Integrations', 'href' => route('settings.integrations'), 'active' => request()->routeIs('settings.integrations*')],
             'general' => ['label' => 'Security & Rules', 'href' => route('settings.general'), 'active' => request()->routeIs('settings.general')],
             'permissions' => ['label' => 'Permissions', 'href' => route('settings.permissions'), 'active' => request()->routeIs('settings.permissions')],
         ]" />

@@ -223,6 +223,12 @@ class Lead extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** The website form (or ad integration) that sent this lead in, if any. */
+    public function integration(): BelongsTo
+    {
+        return $this->belongsTo(Integration::class);
+    }
+
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class);

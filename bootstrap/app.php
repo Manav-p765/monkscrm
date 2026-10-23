@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\IntakeController;
 use App\Http\Middleware\BlockInDemo;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\RequireTwoFactorForAdmins;
@@ -21,6 +22,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 'Content-Type' => 'text/plain; charset=UTF-8',
                 'Cache-Control' => 'no-store',
             ]))->name('healthz');
+
+            // Public lead intake (website forms, Zapier/Make). Also outside the web group: no session,
+            // cookies or CSRF. The integration's secret or allowed origins authenticate each post.
+            Route::middleware('throttle:intake')->group(function () {
+                Route::post('/intake/{key}', [IntakeController::class, 'store'])->name('intake.store');
+                Route::options('/intake/{key}', [IntakeController::class, 'preflight'])->name('intake.preflight');
+            });
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

@@ -1,8 +1,8 @@
 # HybridMonks CRM: project rules
 
-**HybridMonks** is the internal lead-management CRM for Hybrid Monks LLP, deployed at https://crm.hybridmonks.com.
+**HybridMonks CRM** is the internal lead-management CRM for Hybrid Monks LLP, deployed at https://crm.hybridmonks.com.
 The product name lives in exactly one place, `APP_NAME` → `config('app.name')`. Never hard-code
-"HybridMonks" in views, emails or code; always use `config('app.name')`.
+"HybridMonks CRM" in views, emails or code; always use `config('app.name')`.
 It holds client lead data. **Security is the top priority:** no data may be reachable
 without authentication and correct authorization. Keep code clean and practical; do not
 over-engineer and do not add packages unless clearly needed.
@@ -95,6 +95,10 @@ over-engineer and do not add packages unless clearly needed.
 - No user is ever seeded with a known password. First admin: `php artisan crm:create-admin`.
 - Every new route lives inside the `auth` group in `routes/web.php` unless it is an auth screen.
   `AccessControlTest` fails if a non-public route lacks auth.
+  The one other exception is lead intake (`POST /intake/{key}`, in `bootstrap/app.php`, outside the web group):
+  each post is authenticated by its `Integration`'s secret (Bearer or HMAC) or allowed origin, only contact
+  fields come from the payload (status, source and assignee come from the integration), and submissions log
+  field names, never values. New inbound webhooks (Meta, Google Ads) follow the same pattern.
 - Tests: add feature tests for every new permission rule. Tests must not make network calls.
 
 ## UI rules
@@ -169,7 +173,7 @@ pages that duplicate a component; if something is missing, extend a component (o
 
 | Term | Meaning / usage |
 |---|---|
-| **HybridMonks** | The product name. Always rendered via `config('app.name')`. Page titles: "Leads · HybridMonks". Logo: `<x-logo>` (`public/images/logo.png`). |
+| **HybridMonks CRM** | The product name. Always rendered via `config('app.name')`. Page titles: "Leads · HybridMonks CRM". Logo: `<x-logo>` (`public/images/logo.png`). |
 | **Lead** | A potential client (person and/or company). Never "contact", "prospect" or "record". |
 | **Status** | Where a lead is in the pipeline (New, Contacted, Won, …). |
 | **Pipeline** | The board of leads in columns by status (Kanban). Sidebar item "Pipeline". |
